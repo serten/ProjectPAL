@@ -251,3 +251,6 @@ proguard/
 
 # Android Studio captures folder
 captures/
+
+Maps/Maps/gen/com/example/googleMaps/Manifest.java
+*.cache
