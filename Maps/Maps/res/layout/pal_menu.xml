@@ -2,8 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#99CC00"
-    android:orientation="vertical" >
+    android:orientation="vertical" 
+    android:background="#99CC00">
 
     <ImageView
         android:id="@+id/imageView1"
@@ -13,27 +13,18 @@
         android:layout_marginTop="15dp"
         android:src="@drawable/menupal" />
 
-    <TextView
-        android:id="@+id/tVW"
-        android:layout_width="110dp"
-        android:layout_height="43dp"
-        android:textSize="11dp"
-        android:text="" />
-
     <Button
         android:id="@+id/button1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/holo_orange_light"
-        android:text="An Awesome Description"
-        android:textSize="14dp" />
+        android:textSize="14dp"
+        android:text="An Awesome Description" />
 
     <Button
         android:id="@+id/alertZone"
         style="?android:attr/buttonStyleSmall"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/holo_blue_dark"
         android:text="Alert Zone" />
 
     <Button
@@ -41,7 +32,6 @@
         style="?android:attr/buttonStyleSmall"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/holo_orange_light"
         android:text="Follow Me!" />
 
     <Button
@@ -49,15 +39,13 @@
         style="?android:attr/buttonStyleSmall"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/holo_blue_dark"
         android:text="List of Friends" />
 
     <Button
-        android:id="@+id/aboutDev"
+        android:id="@+id/Button01"
         style="?android:attr/buttonStyleSmall"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/holo_orange_light"
         android:text="About" />
 
     <Button
@@ -65,7 +53,6 @@
         style="?android:attr/buttonStyleSmall"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/holo_blue_dark"
         android:text="Button" />
 
 </LinearLayout>

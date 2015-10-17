@@ -50,74 +50,39 @@ import android.widget.Toast;
 
 public class PalMenu extends Activity{
 
-	public final static String EXTRA_MESSAGE = "com.example.MESSAGE";
-	String userName;
+
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //getActionBar().setDisplayHomeAsUpEnabled(true);
-        
-        Intent intent = getIntent();
-		userName = intent.getStringExtra(Login.EXTRA_MESSAGE);
-        
-		setContentView(R.layout.pal_menu);
+
+        setContentView(R.layout.pal_menu);
         Button btnAlertZone = (Button) findViewById(R.id.alertZone);
-        Button aboutDev = (Button) findViewById(R.id.aboutDev);
-        TextView tVW = (TextView) findViewById(R.id.tVW);
-        tVW.setTextColor(Color.RED);
-        tVW.setText("Welcome "+userName);
         /** Defining a click event listener for the button */
-        btnAlertZone.setOnClickListener(new OnClickListener() {
+        OnClickListener actionToDo = new OnClickListener() {
  
             @Override
             public void onClick(View v) {
-                if(isNetworkAvailable()){
-                    /** Getting a reference to Edit text containing url */
-                	Intent results = new Intent(PalMenu.this, AlertZone.class);
-                	results.putExtra(EXTRA_MESSAGE, userName);
-    				startActivity(results);
-    				onPause();
-                }else{
-                    Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
-                }
+            	switch(v.getId())
+        		{
+        			case R.id.alertZone:
+        			
+		                if(isNetworkAvailable()){
+		                    /** Getting a reference to Edit text containing url */
+		                	Intent results = new Intent(PalMenu.this, AlertZone.class);
+		    				startActivity(results);
+		    				onPause();
+		                }else{
+		                    Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
+		                }
+        			 break;
+        		}
             }
-        });
-        
-        btnAlertZone.setOnClickListener(new OnClickListener() {
-        	 
-            @Override
-            public void onClick(View v) {
-                if(isNetworkAvailable()){
-                    /** Getting a reference to Edit text containing url */
-                	Intent results = new Intent(PalMenu.this, AlertZone.class);
-                	results.putExtra(EXTRA_MESSAGE, userName);
-    				startActivity(results);
-    				onPause();
-                }else{
-                    Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-        
-        aboutDev.setOnClickListener(new OnClickListener() {
-       	 
-            @Override
-            public void onClick(View v) {
-                if(isNetworkAvailable()){
-                    /** Getting a reference to Edit text containing url */
-                	Intent results = new Intent(PalMenu.this, AboutDev.class);
-                	results.putExtra(EXTRA_MESSAGE, userName);
-    				startActivity(results);
-    				onPause();
-                }else{
-                    Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+        };
  
         /** Setting Click listener for the download button */
-        //btnAlertZone.setOnClickListener(actionToDo);
+        btnAlertZone.setOnClickListener(actionToDo);
     }
    
     
