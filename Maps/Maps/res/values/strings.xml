@@ -8,8 +8,8 @@
     <string name="map_info">Map information</string>
     <string name="str_btn_download">Login</string>
     <string name="str_iv_description">Login Status</string>
-    <string name="str_tv_url">http://54.187.253.246/selectuser/select.php</string>
-    <string name="str_reg_url">http://54.187.253.246/selectuser/register.php</string>
+    <string name="str_tv_url">http://54.187.253.246/selectuser/login_postgre.php</string>
+    <string name="str_reg_url">http://54.187.253.246/selectuser/register_postgre.php</string>
     <string name="title_activity_register_page">RegisterPage</string>
 
 </resources>
