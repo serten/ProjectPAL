@@ -6,6 +6,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONObject;
+
 import android.R.menu;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -19,6 +27,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.internal.view.menu.MenuView.ItemView;
@@ -64,7 +73,7 @@ import com.google.android.gms.maps.model.PolygonOptions;
 
 public class AlertZone extends FragmentActivity implements OnMapReadyCallback,ConnectionCallbacks, OnConnectionFailedListener,LocationListener, android.location.LocationListener {
 	private final LatLng LOCATION_LA = new LatLng(34.022324, -118.282522);
-	
+	public final static String EXTRA_MESSAGE = "com.example.MESSAGE";
 	private GoogleMap map;
 	private GoogleMap map2;
 	
@@ -78,6 +87,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     protected Boolean mRequestingLocationUpdates;
 
     protected String mLastUpdateTime;
+    private LongLatInfo myTask;
 
     
     protected static final String TAG = "location-updates-sample";
@@ -104,6 +114,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	private boolean infoShown = false;
 	private boolean startView = true;
 	private boolean holdChange = false;
+	private boolean sendMode = false;
 	private String locality = null;
 	private int dragIndex = -1;
 	private int dragRad = 10000;
@@ -123,7 +134,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	
 	Activity activity;
 	Bundle info;
-
+	String userName;
 	
 	private LatLng circCenter;
     
@@ -135,13 +146,14 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 
 		Log.d("Http", "1");
 
-		Bundle extras = getIntent().getExtras();
+		Intent intent = getIntent();
+		userName = intent.getStringExtra(Login.EXTRA_MESSAGE);
 
 		Log.d("Http", "1.5");
 
 		Log.d("Http", "2");
 		
-		setContentView(R.layout.activity_main);
+		setContentView(R.layout.alert_zone);
 		
 		MapFragment mpFrag = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
 		map  = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
@@ -508,12 +520,6 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		spec2.setContent(R.id.tab2);
 		spec2.setIndicator("Search", null);
 		tabHost.addTab(spec2);
-		
-		TabSpec spec3 = tabHost.newTabSpec("tab3");
-		spec3.setContent(R.id.tab3);
-		spec3.setIndicator("About Me", null);
-		tabHost.addTab(spec3);
-
 		
 		mRequestingLocationUpdates = false;
         mLastUpdateTime = "";
@@ -969,13 +975,96 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
         	double j = (double) mCurrentLocation.getLongitude();
         	String forToast = "You are at: " + i + " , " +j;
         	//Toast.makeText(this, forToast, Toast.LENGTH_LONG).show();
-        	
+        	String URL = "http://cs-server.usc.edu:1111/maps.php/?lat="
+					+ i
+					+ "&long="
+					+ j
+					+ "&user="
+					+ userName; // "http://default-environment-cjggqwe5t2.elasticbeanstalk.com/?str=2636%20Menlo%20Ave&cit=Los%20Angeles&sta=CA";//"http://default-environment-cjggqwe5t2.elasticbeanstalk.com/?str="+
+															// address+
+															// "&cit="+
+															// city+
+															// "&sta="+
+															// spinner.getSelectedItem().toString();//
+															// "http://default-environment-cjggqwe5t2.elasticbeanstalk.com/?str=2&cit=Chicago&sta=IL";//
+			// "http://default-environment-cjggqwe5t2.elasticbeanstalk.com/?str=2636%20Menlo%20Ave&cit=Los%20Angeles&sta=CA";//"http://default-environment-cjggqwe5t2.elasticbeanstalk.com/?str="+address+"&cit="+city+"&sta="+spinner.getSelectedItem().toString()";
+			final String Link = URL.replace(" ", "%20");
+			Log.d("Link", Link);
+			myTask = new LongLatInfo();
+			if (!myTask.isCancelled())
+				myTask.execute(Link);
+			
         	eT2.setText(String.format("%.6f",i));
         	eT3.setText(String.format("%.6f",j));
         	
         	map2.addMarker(new MarkerOptions().position(myPos).title("We Are Here! Suleyman-Keyvan-Ali"));
         }
     }
+    
+    
+    
+    private class LongLatInfo extends AsyncTask<String, Integer, String>{ // X,Y,Z
+    	protected String doInBackground(String... params) { // Z,X
+    		
+    		try {
+    			if (!isCancelled()){
+					Log.d("params[0]", params[0]);
+					HttpClient client = new DefaultHttpClient();
+					StringBuilder url = new StringBuilder(params[0]);
+					if (!isCancelled()){
+						HttpGet get = new HttpGet(url.toString());
+						Log.d("1Error", "1");
+						client.execute(get);
+					}
+    			}
+    			
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
+			Log.d("4Error", "4");
+			return null;
+		}
+
+		protected void onPostExecute(String result) { // Z
+		}
+		
+		
+		protected void onCancelled (String result){
+			super.onCancelled(result);
+		}
+    }
+    
+    private class shapeSend extends AsyncTask<String, Integer, String>{ // X,Y,Z
+    	protected String doInBackground(String... params) { // Z,X
+    		
+    		try {
+    			if (!isCancelled()){
+					Log.d("params[0]", params[0]);
+					HttpClient client = new DefaultHttpClient();
+					StringBuilder url = new StringBuilder(params[0]);
+					if (!isCancelled()){
+						HttpGet get = new HttpGet(url.toString());
+						Log.d("1Error", "1");
+						client.execute(get);
+					}
+    			}
+    			
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
+			Log.d("4Error", "4");
+			return null;
+		}
+
+		protected void onPostExecute(String result) { // Z
+		}
+		
+		
+		protected void onCancelled (String result){
+			super.onCancelled(result);
+		}
+    }
+    
     
 
     protected void stopLocationUpdates() {
@@ -996,6 +1085,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
         }
     }
     
+    
     protected void startLocationUpdates() {
         LocationServices.FusedLocationApi.requestLocationUpdates(
                 mGoogleApiClient, mLocationRequest, (LocationListener) this);
@@ -1015,7 +1105,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
         }
         
         if (locationManager != null){
-        	locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 0, this);
+        	locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 7000, 0, this);
         }
         	
         if (mRequestingLocationUpdates) {
@@ -1025,13 +1115,14 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
         
     }
     
+ 
+    
     public void onClickHandler(View v) {
 		switch (v.getId()) {
 		case R.id.myPic:
 			Intent in = new Intent(Intent.ACTION_VIEW,
 					Uri.parse("https://www.facebook.com/keyvan.noury?fref=ts")); // homesetails
 			startActivity(in); // Opening the addresse's website
-
 			break;
 		case R.id.myPic2:
 			Intent in1 = new Intent(Intent.ACTION_VIEW,
@@ -1039,7 +1130,6 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			// is
 			// result[22]
 			startActivity(in1); // Opening the addresse's website
-
 			break;
 		case R.id.myPic3:
 			Intent in2 = new Intent(Intent.ACTION_VIEW,
@@ -1047,7 +1137,6 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			// is
 			// result[22]
 			startActivity(in2); // Opening the addresse's website
-
 			break;
 		// put your onclick code here
 		}
@@ -1133,7 +1222,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.main, menu);
+		getMenuInflater().inflate(R.menu.alert_zone_menu, menu);
 		return true;
 	}
 	
@@ -1146,6 +1235,34 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		
 		
 		switch (item.getItemId()) {
+		case R.id.send:
+			Log.d("send0", "Hello");
+			boolean startIs = true;
+			boolean endIs = false;
+			for (int i = 0; i < counterPoly; i++) {
+				Log.d("send1", "Hello");
+				if (i == counterPoly-1)
+					endIs = true;
+				
+				String URL = "http://cs-server.usc.edu:1111/shapeSave.php/?start="+startIs+"&end="+endIs+"&user="+userName
+						+"&counterPoly="+ i
+						+"&Polytype=" + polyType.get(i);
+				
+				if (startIs)
+					startIs = false;
+				
+				for (int j = 0; j < polyType.get(i); j++) {
+					URL += "&point"+j+"="+markers.get(i).get(j);
+				}
+				Log.d("send2", "Hello");
+			    String Link = URL.replace(" ", "%20");
+			    Log.d("send3", "Hello");
+				Log.d("Link", Link);
+				
+				new shapeSend().execute(Link);
+			}
+			
+			break;
 		case R.id.map3:
 			poly_num = 3;
 			item.setChecked(true);
@@ -1202,8 +1319,11 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     
     public void onBackPressed() {
     	Intent intent = new Intent(AlertZone.this,PalMenu.class);
+    	intent.putExtra(EXTRA_MESSAGE, userName);
 		startActivity(intent);
-		moveTaskToBack(true);
+		myTask.cancel(true);
+		finish();
+		//moveTaskToBack(true);
     }
 	
     

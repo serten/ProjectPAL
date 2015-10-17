@@ -132,14 +132,19 @@ public class Login extends Activity{
         		{
 	        		case R.id.register:
 	    			{
+	    				if(isNetworkAvailable()){
+	    					Intent intent = new Intent(Login.this,RegisterPage.class);
+	    			    	startActivity(intent);
+		                }else{
+		                    Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
+		                }
 	    				
-	    				//setContentView(R.layout.register);
 	    				break;
 	    			}
         		}
             }
         };
-       // btnRegister.setOnClickListener(registerListener);
+       btnRegister.setOnClickListener(registerListener);
        
     }
     
@@ -259,6 +264,7 @@ public class Login extends Activity{
             if (result.contains("wellcome")){
             	Toast.makeText(getBaseContext(), "Welcome back!", Toast.LENGTH_SHORT).show();
 				Intent results = new Intent(Login.this, PalMenu.class);
+				results.putExtra(EXTRA_MESSAGE, username);
 				startActivity(results);
 				finish();
             }
