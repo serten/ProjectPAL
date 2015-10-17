@@ -49,7 +49,8 @@ import android.widget.Toast;
 public class AboutDev extends Activity {
 
 	public final static String EXTRA_MESSAGE = "com.example.MESSAGE";
-	String userName;
+	public final static String USER_ID = "com.example.USERID";
+	String userName,userID;
 	
 	
 	@Override
@@ -57,7 +58,7 @@ public class AboutDev extends Activity {
 		super.onCreate(savedInstanceState);
 		Intent intent = getIntent();
 		userName = intent.getStringExtra(Login.EXTRA_MESSAGE);
-
+		userID = intent.getStringExtra(Login.USER_ID);
 		setContentView(R.layout.about_dev);
 		
 	}
@@ -65,6 +66,7 @@ public class AboutDev extends Activity {
 	public void onBackPressed() {
 		Intent intent = new Intent(AboutDev.this, PalMenu.class);
 		intent.putExtra(EXTRA_MESSAGE, userName);
+		intent.putExtra(USER_ID, userID);
 		startActivity(intent);
 		finish();
 		//moveTaskToBack(true);

@@ -74,6 +74,8 @@ import com.google.android.gms.maps.model.PolygonOptions;
 public class AlertZone extends FragmentActivity implements OnMapReadyCallback,ConnectionCallbacks, OnConnectionFailedListener,LocationListener, android.location.LocationListener {
 	private final LatLng LOCATION_LA = new LatLng(34.022324, -118.282522);
 	public final static String EXTRA_MESSAGE = "com.example.MESSAGE";
+	public final static String USER_ID = "com.example.USERID";
+	String userName,userID;
 	private GoogleMap map;
 	private GoogleMap map2;
 	
@@ -134,7 +136,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	
 	Activity activity;
 	Bundle info;
-	String userName;
+
 	
 	private LatLng circCenter;
     
@@ -148,7 +150,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 
 		Intent intent = getIntent();
 		userName = intent.getStringExtra(Login.EXTRA_MESSAGE);
-
+		userID = intent.getStringExtra(Login.USER_ID);
 		Log.d("Http", "1.5");
 
 		Log.d("Http", "2");
@@ -1320,6 +1322,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     public void onBackPressed() {
     	Intent intent = new Intent(AlertZone.this,PalMenu.class);
     	intent.putExtra(EXTRA_MESSAGE, userName);
+    	intent.putExtra(USER_ID, userID);
 		startActivity(intent);
 		myTask.cancel(true);
 		finish();

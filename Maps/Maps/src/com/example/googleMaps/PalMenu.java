@@ -51,7 +51,8 @@ import android.widget.Toast;
 public class PalMenu extends Activity{
 
 	public final static String EXTRA_MESSAGE = "com.example.MESSAGE";
-	String userName;
+	public final static String USER_ID = "com.example.USERID";
+	String userName,userID;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -60,7 +61,7 @@ public class PalMenu extends Activity{
         
         Intent intent = getIntent();
 		userName = intent.getStringExtra(Login.EXTRA_MESSAGE);
-        
+        userID = intent.getStringExtra(Login.USER_ID);
 		setContentView(R.layout.pal_menu);
         Button btnAlertZone = (Button) findViewById(R.id.alertZone);
         Button aboutDev = (Button) findViewById(R.id.aboutDev);
@@ -80,6 +81,7 @@ public class PalMenu extends Activity{
                     /** Getting a reference to Edit text containing url */
                 	Intent results = new Intent(PalMenu.this, AlertZone.class);
                 	results.putExtra(EXTRA_MESSAGE, userName);
+                	results.putExtra(USER_ID, userID);
     				startActivity(results);
     				onPause();
                 }else{
@@ -88,21 +90,6 @@ public class PalMenu extends Activity{
             }
         });
         
-        btnAlertZone.setOnClickListener(new OnClickListener() {
-        	 
-            @Override
-            public void onClick(View v) {
-                if(isNetworkAvailable()){
-                    /** Getting a reference to Edit text containing url */
-                	Intent results = new Intent(PalMenu.this, AlertZone.class);
-                	results.putExtra(EXTRA_MESSAGE, userName);
-    				startActivity(results);
-    				onPause();
-                }else{
-                    Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
         
         aboutDev.setOnClickListener(new OnClickListener() {
        	 
@@ -112,6 +99,7 @@ public class PalMenu extends Activity{
                     /** Getting a reference to Edit text containing url */
                 	Intent results = new Intent(PalMenu.this, AboutDev.class);
                 	results.putExtra(EXTRA_MESSAGE, userName);
+                	results.putExtra(USER_ID, userID);
     				startActivity(results);
     				onPause();
                 }else{
@@ -129,6 +117,7 @@ public class PalMenu extends Activity{
                     /** Getting a reference to Edit text containing url */
                 	Intent results = new Intent(PalMenu.this, ListOfFriends.class);
                 	results.putExtra(EXTRA_MESSAGE, userName);
+                	results.putExtra(USER_ID, userID);
     				startActivity(results);
     				onPause();
                 }else{

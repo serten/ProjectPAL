@@ -49,6 +49,7 @@ import android.widget.Toast;
 public class Login extends Activity{
 
 	public final static String EXTRA_MESSAGE = "com.example.MESSAGE";
+	public final static String USER_ID = "com.example.USERID";
 	private String username = null;
 	private String password = null;
 	
@@ -56,6 +57,7 @@ public class Login extends Activity{
 	private EditText passET;
 	private String comeBack = null;
 	public int doStart= 1; 
+	public String USERPKID = null;
 	@Override
 	protected void onStop() {
 	    super.onStart();  // Always call the superclass method first
@@ -261,9 +263,13 @@ public class Login extends Activity{
             iView.setText(result);
             
             Log.d("7Error", "7");
-            if (result.contains("wellcome")){
-            	Toast.makeText(getBaseContext(), "Welcome back!", Toast.LENGTH_SHORT).show();
+            if (result.contains("denied")){}
+            else
+            {
+            	Toast.makeText(getBaseContext(), "Welcome back!"+result.toString(), Toast.LENGTH_SHORT).show();
 				Intent results = new Intent(Login.this, PalMenu.class);
+				USERPKID=result.toString();
+				results.putExtra(USER_ID, USERPKID);
 				results.putExtra(EXTRA_MESSAGE, username);
 				startActivity(results);
 				finish();
@@ -296,6 +302,7 @@ public class Login extends Activity{
     	Intent intent = new Intent(Login.this,RegisterPage.class);
     	String message = "new intent from main activity";
     	intent.putExtra(EXTRA_MESSAGE, message);
+    	
     	startActivity(intent);
     }  
 }
