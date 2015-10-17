@@ -55,42 +55,34 @@ public class RegisterPage extends Activity {
 
 	    // Set the text view as the activity layout
 	    setContentView(R.layout.activity_register_page);
-	    OnClickListener regListener = new OnClickListener() {
+	    Button regbutton = (Button) findViewById(R.id.regbutton);
+	    
+        /** Setting Click listener for the download button */
+        regbutton.setOnClickListener( new OnClickListener() {
 	    	 
             @Override
             public void onClick(View v) {
-            	switch(v.getId())
-        		{
-        			case R.id.regbutton:
-        			{
             	
-		                if(regisNetworkAvailable()){
-		                    /** Getting a reference to Edit text containing url */
-		                    EditText etUrl = (EditText) findViewById(R.id.reg_url);
-		                    EditText e=(EditText) findViewById(R.id.regusername);
-		                    regusername=e.getText().toString();
-		                    e=(EditText) findViewById(R.id.regpassword);
-		                    regpassword=e.getText().toString();
-		                    /** Creating a new non-ui thread task */
-		                    RegTask downloadTask = new RegTask();
-		                   
-		                    /** Starting the task created above */
-		                    downloadTask.execute(etUrl.getText().toString());
-		                    
-		                    
-		                    
-		                }else{
-		                    Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
-		                }
-        			}
-        			
-        		}
-            }
-        };
-        Button regbutton = (Button) findViewById(R.id.regbutton);
- 
-        /** Setting Click listener for the download button */
-        regbutton.setOnClickListener(regListener);
+            	
+                if(regisNetworkAvailable()){
+                    /** Getting a reference to Edit text containing url */
+                    EditText etUrl = (EditText) findViewById(R.id.reg_url);
+                    EditText e=(EditText) findViewById(R.id.regusername);
+                    regusername=e.getText().toString();
+                    e=(EditText) findViewById(R.id.regpassword);
+                    regpassword=e.getText().toString();
+                    /** Creating a new non-ui thread task */
+                    RegTask downloadTask = new RegTask();
+                   
+                    /** Starting the task created above */
+                    downloadTask.execute(etUrl.getText().toString());
+
+                }else{
+                    Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
+                }
+			}
+        });
+        
 	}
 
 
@@ -184,9 +176,8 @@ public class RegisterPage extends Activity {
 	   
 	   public void closethis()
 	   {		   
-		   
 		   finish();
-		   startActivity(new Intent (RegisterPage.this, AlertZone.class));
+		   startActivity(new Intent (RegisterPage.this, Login.class));
 	   }
 }
 

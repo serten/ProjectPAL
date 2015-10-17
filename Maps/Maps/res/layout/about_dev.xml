@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <FrameLayout
+        android:id="@android:id/tabcontent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center"
+            android:orientation="vertical" >
+
+            <ScrollView
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_weight="15"
+                android:scrollbars="none" >
+
+                <LinearLayout
+                    android:id="@+id/layoutTwitter"
+                    android:layout_width="match_parent"
+                    android:layout_height="fill_parent"
+                    android:orientation="vertical" >
+
+                    <ImageView
+                        android:layout_width="fill_parent"
+                        android:layout_height="85dp"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="20dp"
+                        android:layout_weight="19.75"
+                        android:src="@drawable/palbra" />
+
+                    <ImageView
+                        android:id="@+id/myPic"
+                        android:layout_width="fill_parent"
+                        android:layout_height="150dp"
+                        android:layout_marginTop="30dp"
+                        android:layout_weight="19.75"
+                        android:onClick="onClickHandler"
+                        android:src="@drawable/man" />
+
+                    <TextView
+                        android:id="@+id/textView3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:layout_centerVertical="true"
+                        android:gravity="center"
+                        android:text="About The Developer"
+                        android:textAppearance="?android:attr/textAppearanceLarge"
+                        android:textColor="#0000CC"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/textView2"
+                        android:layout_width="260dp"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentBottom="true"
+                        android:layout_marginBottom="55dp"
+                        android:layout_marginLeft="67dp"
+                        android:text=" "
+                        android:textColor="#DDBBBB" />
+
+                    <ImageView
+                        android:id="@+id/myPic2"
+                        android:layout_width="fill_parent"
+                        android:layout_height="150dp"
+                        android:layout_marginTop="30dp"
+                        android:layout_weight="19.75"
+                        android:onClick="onClickHandler"
+                        android:src="@drawable/sul" />
+
+                    <TextView
+                        android:id="@+id/textView5"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:layout_centerVertical="true"
+                        android:gravity="center"
+                        android:text="About The Developer"
+                        android:textAppearance="?android:attr/textAppearanceLarge"
+                        android:textColor="#0000CC"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/textView4"
+                        android:layout_width="260dp"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentBottom="true"
+                        android:layout_marginBottom="55dp"
+                        android:layout_marginLeft="67dp"
+                        android:text=""
+                        android:textColor="#DDBBBB" />
+
+                    <ImageView
+                        android:id="@+id/myPic3"
+                        android:layout_width="fill_parent"
+                        android:layout_height="150dp"
+                        android:layout_marginTop="30dp"
+                        android:layout_weight="19.75"
+                        android:onClick="onClickHandler"
+                        android:src="@drawable/ali" />
+
+                    <TextView
+                        android:id="@+id/textView7"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:layout_centerVertical="true"
+                        android:gravity="center"
+                        android:text="About The Developer"
+                        android:textAppearance="?android:attr/textAppearanceLarge"
+                        android:textColor="#0000CC"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/textView6"
+                        android:layout_width="260dp"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentBottom="true"
+                        android:layout_marginBottom="55dp"
+                        android:layout_marginLeft="67dp"
+                        android:text=""
+                        android:textColor="#DDBBBB" />
+                </LinearLayout>
+            </ScrollView>
+        </RelativeLayout>
+    </FrameLayout>
+
+</LinearLayout>
