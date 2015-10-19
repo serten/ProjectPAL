@@ -4,10 +4,25 @@
     android:layout_height="wrap_content"
     android:orientation="vertical" >
 
-    <TextView android:layout_height="wrap_content" 
-        android:layout_width="wrap_content"
-        android:id="@+id/user_ID"
-        android:text="FRIEND LIST"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <TextView
+            android:id="@+id/user_ID"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.95"
+            android:gravity="center"
+            android:text="FRIEND LIST" />
+
+        <Button
+            android:id="@+id/serachForFriends"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="168dp"
+            android:layout_height="wrap_content"
+            android:text="Search New Friends" />
+    </LinearLayout>
     
     <ListView
   		android:id="@android:id/list"

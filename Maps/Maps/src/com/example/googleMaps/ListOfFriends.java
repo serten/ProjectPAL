@@ -17,6 +17,7 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
@@ -43,6 +44,7 @@ public class ListOfFriends extends ListActivity{
 	String userName,userID;
 	String[] items;
 	ArrayAdapter ListAdapter;
+	
 	@Override
 	protected void onDestroy() {
 		// TODO Auto-generated method stub
@@ -60,17 +62,40 @@ public class ListOfFriends extends ListActivity{
 	}
 	
 	@Override
+    protected void onPause() {
+		// TODO Auto-generated method stub
+		super.onPause();
+	}
+	
+	
+	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		Intent intent = getIntent();
 		userName = intent.getStringExtra(Login.EXTRA_MESSAGE);
-        userID = intent.getStringExtra(Login.USER_ID);
-	    
-
-	  
+        userID = intent.getStringExtra(Login.USER_ID);	  
 	    // Set the text view as the activity layout
 	    setContentView(R.layout.list_of_friends);
 	   
+	    
+	    Button searchNewFriends = (Button) findViewById(R.id.serachForFriends);
+	    
+	    searchNewFriends.setOnClickListener(new OnClickListener() {
+         	 
+            @Override
+            public void onClick(View v) {
+                if(isNetworkAvailable()){
+                    /** Getting a reference to Edit text containing url */
+                	Intent results = new Intent(ListOfFriends.this, SearchForFriends.class);
+                	results.putExtra(EXTRA_MESSAGE, userName);
+                	results.putExtra(USER_ID, userID);
+    				startActivity(results);
+    				finish();
+                }else{
+                    Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
 	    
 	    
 	    DownloadTask downloadTask = new DownloadTask();
@@ -80,7 +105,20 @@ public class ListOfFriends extends ListActivity{
        
 
 	}	
-	
+	private boolean isNetworkAvailable(){
+        boolean available = false;
+        /** Getting the system's connectivity service */
+        ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+ 
+        /** Getting active network interface  to get the network's status */
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+ 
+        if(networkInfo !=null && networkInfo.isAvailable())
+            available = true;
+ 
+        /** Returning the status of the network */
+        return available;
+    }
 	public void createList(String[] parts)
 	{
 		

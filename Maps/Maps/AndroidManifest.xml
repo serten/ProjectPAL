@@ -64,7 +64,6 @@
             android:label="PalHunter Menu">
             <intent-filter>
                 <action android:name="com.example.googleMaps.MAIN" />
-
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
@@ -74,16 +73,25 @@
             android:name=".ListOfFriends"
             android:label="List Of Friends"
             android:parentActivityName=".PalMenu" >
+            
+
+            
+             
+        </activity>
+        
+        <!-- search for new friends  -->
+         <activity
+            android:name=".SearchForFriends"
+            android:label="Search For Friends"
+            android:parentActivityName=".ListOfFriends" >
+            
+             
         </activity>
 
         <activity
             android:name=".AboutDev"
             android:label="About Developres">
-            <intent-filter>
-                <action android:name="com.example.googleMaps.MAIN" />
 
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
         </activity>
         
         <meta-data
