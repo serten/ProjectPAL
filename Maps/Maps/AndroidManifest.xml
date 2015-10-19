@@ -83,8 +83,7 @@
         
         <activity
             android:name=".SearchForFriends"
-            android:label="Search For Friends"
-            android:parentActivityName=".ListOfFriends" >
+            android:label="Search For Friends">
         </activity>
         
         <activity
@@ -99,7 +98,7 @@
 
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
-            android:value="AIzaSyDXiN9w_C06r1Q3Qx3BzMZnyWMc76tDhmk" />
+            android:value="AIzaSyDZ1Lp2m5aUE8h5O6I5L6vTSz1z0_RpChw" />
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
