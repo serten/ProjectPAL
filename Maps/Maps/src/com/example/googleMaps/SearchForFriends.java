@@ -36,6 +36,8 @@ public class SearchForFriends extends ListActivity {
 	String userName,userID;
 	EditText searchFriendInput;
 	String inputString;
+	String addFriendID=null;
+	String idsArray[];
 	//ArrayAdapter ListAdapter;
 	
 	@Override
@@ -47,6 +49,11 @@ public class SearchForFriends extends ListActivity {
 	@Override
 	protected void onStop() {
 	    super.onStop();  // Always call the superclass method first
+	    Intent intent = new Intent(SearchForFriends.this, ListOfFriends.class);
+		intent.putExtra(EXTRA_MESSAGE, userName);
+		intent.putExtra(USER_ID, userID);
+		startActivity(intent);
+		finish();
 	}
 	
 
@@ -94,7 +101,7 @@ public class SearchForFriends extends ListActivity {
 
 	}	
 	
-	 @SuppressWarnings("finally")
+	@SuppressWarnings("finally")
 	private String networkConnect(String strUrl) throws IOException{
 
 	        String strFileContents=null;
@@ -175,7 +182,27 @@ public class SearchForFriends extends ListActivity {
 	            {
 	            	String[] parts = result.split(" ");
 	            	//Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
-		    		createList(parts);
+	            	ArrayList<String> names = new ArrayList<String>();
+	            	
+	            	for(int i = 0; i<parts.length/2;i++)
+	            	{
+	            		  names.add(parts[i]);  		
+	            	
+	            	}
+	            	String[] namesArray = new String[names.size()];
+	            	namesArray = names.toArray(namesArray);
+	            	
+	            	ArrayList<String> ids = new ArrayList<String>();
+	            	for(int i = parts.length/2; i<parts.length;i++)
+	            	{
+	            		  ids.add(parts[i]);  		
+	            	
+	            	}
+	            	idsArray = new String[ids.size()];
+	            	idsArray = ids.toArray(idsArray);            	
+	            	
+	            	
+		    		createList(namesArray);
 	            }
 	            /** Showing a message, on completion of download process */
 	            //Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
@@ -187,6 +214,21 @@ public class SearchForFriends extends ListActivity {
 			
 		    ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1, parts);
 		    setListAdapter(adapter);
+		}
+	 
+	 @Override
+		protected void onListItemClick(ListView l, View v, int position, long id) {
+
+			//get selected items
+		 	addFriendID=""+idsArray[position];
+			//String selectedValue = (String) getListAdapter().getItem(position);
+			//Toast.makeText(this, addFriendID, Toast.LENGTH_SHORT).show();
+		 	AddFriendTask  addFriendTask = new  AddFriendTask();
+            
+            /** Starting the task created above */
+            String url="http://54.187.253.246/selectuser/addFriend_postgre.php";
+            addFriendTask.execute(url);
+
 		}
 	 
 	private boolean isNetworkAvailable(){
@@ -203,4 +245,98 @@ public class SearchForFriends extends ListActivity {
         /** Returning the status of the network */
         return available;
     }
+	
+	/** friendlist adding section **/
+	@SuppressWarnings("finally")
+	private String AddFriend(String strUrl) throws IOException{
+
+	        String strFileContents=null;
+	        BufferedInputStream in=null;
+	    	
+	        try{
+	            URL url = new URL(strUrl);
+	            /** Creating an http connection to communcate with url */
+	            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+	            
+	            /** Connecting to url */
+	            //urlConnection.connect();
+	            urlConnection.setRequestMethod("POST");
+	            
+	            String urlParameters ="userID="+userID+"&inputString="+addFriendID;
+	            					
+	    		// Send post request
+	            urlConnection.setDoOutput(true);
+	    		DataOutputStream wr = new DataOutputStream(urlConnection.getOutputStream());
+	    		wr.writeBytes(urlParameters);
+	    		wr.flush();
+	    		wr.close();
+
+	    		
+	            //urlConnection.connect();
+	            in = new BufferedInputStream(urlConnection.getInputStream() );
+	            byte[] contents = new byte[1024];
+
+	            int bytesRead=0;
+	             
+	            while( (bytesRead = in.read(contents)) != -1){ 
+	               strFileContents = new String(contents, 0, bytesRead);               
+	            }
+	            
+	    		
+	 
+	            /** Creating a bitmap from the stream returned from the url */
+	            
+	 
+	        }catch(Exception e){
+	            Log.d("Exception while downloading url", e.toString());
+	            
+	        }finally{
+	            in.close();
+	            return strFileContents;
+	           
+	        }
+	       
+	    }
+
+	 private class AddFriendTask extends AsyncTask<String, Integer, String>{
+	        String bitmap = null;
+	        @Override
+	        protected String doInBackground(String... url) {
+	            try{
+	            	
+	                bitmap = AddFriend(url[0]);
+	            }catch(Exception e){
+	                Log.d("Background Task",e.toString());
+	            }
+	            return bitmap;
+	        }
+	 
+	        @Override
+	        protected void onPostExecute(String result) {
+	            /** Getting a reference to ImageView to display the
+	            * downloaded image
+	            */
+
+	            
+	            
+	            if (result.contains("ALREADY A FRIEND")){
+	            	
+	            	Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+	            }
+	            else if (result.contains("denied"))
+	            {
+	            	Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+	            }
+	            else
+	            {
+	            	
+	            	Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+	            	onStop();
+	            	
+	            }
+	            /** Showing a message, on completion of download process */
+	            //Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+	        }
+	    } 
+	
 }

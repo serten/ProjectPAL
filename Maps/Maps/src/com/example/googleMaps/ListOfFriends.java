@@ -9,6 +9,7 @@ import java.util.ArrayList;
 
 
 
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -44,6 +45,9 @@ public class ListOfFriends extends ListActivity{
 	String userName,userID;
 	String[] items;
 	ArrayAdapter ListAdapter;
+	String inputString;
+	String deleteFriendID=null;
+	String idsArray[];
 	
 	@Override
 	protected void onDestroy() {
@@ -214,13 +218,138 @@ public class ListOfFriends extends ListActivity{
 	    	else
 	    	{
 	    		String[] parts = result.split(" ");
-	    		createList(parts);
+            	//Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+            	ArrayList<String> names = new ArrayList<String>();
+            	
+            	for(int i = 0; i<parts.length/2;i++)
+            	{
+            		  names.add(parts[i]);  		
+            	
+            	}
+            	String[] namesArray = new String[names.size()];
+            	namesArray = names.toArray(namesArray);
+            	
+            	ArrayList<String> ids = new ArrayList<String>();
+            	for(int i = parts.length/2; i<parts.length;i++)
+            	{
+            		  ids.add(parts[i]);  		
+            	
+            	}
+            	idsArray = new String[ids.size()];
+            	idsArray = ids.toArray(idsArray);            	
+            	
+            	
+	    		createList(namesArray);
 	    	}
-	    	
+   	
 	    	
 	    	
 	    	/** Showing a message, on completion of download process */
 	        //Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
 	    }
 	}
+
+	 @Override
+	protected void onListItemClick(ListView l, View v, int position, long id) {
+
+		//get selected items
+		deleteFriendID=""+idsArray[position];
+		//String selectedValue = (String) getListAdapter().getItem(position);
+		//Toast.makeText(this, deleteFriendID, Toast.LENGTH_SHORT).show();
+		DeleteFriendTask  deleteFriendTask = new  DeleteFriendTask();
+         
+        /** Starting the task created above */
+        String url="http://54.187.253.246/selectuser/deleteFriend_postgre.php";
+        deleteFriendTask.execute(url);
+
+	}	
+	
+	
+	/** friendlist DELETING section **/
+	@SuppressWarnings("finally")
+	private String DeleteFriend(String strUrl) throws IOException{
+
+	        String strFileContents=null;
+	        BufferedInputStream in=null;
+	    	
+	        try{
+	            URL url = new URL(strUrl);
+	            /** Creating an http connection to communcate with url */
+	            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+	            
+	            /** Connecting to url */
+	            //urlConnection.connect();
+	            urlConnection.setRequestMethod("POST");
+	            
+	            String urlParameters ="userID="+userID+"&inputString="+deleteFriendID;
+	            					
+	    		// Send post request
+	            urlConnection.setDoOutput(true);
+	    		DataOutputStream wr = new DataOutputStream(urlConnection.getOutputStream());
+	    		wr.writeBytes(urlParameters);
+	    		wr.flush();
+	    		wr.close();
+
+	    		
+	            //urlConnection.connect();
+	            in = new BufferedInputStream(urlConnection.getInputStream() );
+	            byte[] contents = new byte[1024];
+
+	            int bytesRead=0;
+	             
+	            while( (bytesRead = in.read(contents)) != -1){ 
+	               strFileContents = new String(contents, 0, bytesRead);               
+	            }
+	            
+	    		
+	 
+	            /** Creating a bitmap from the stream returned from the url */
+	            
+	 
+	        }catch(Exception e){
+	            Log.d("Exception while downloading url", e.toString());
+	            
+	        }finally{
+	            in.close();
+	            return strFileContents;
+	           
+	        }
+	       
+	    }
+
+	 private class DeleteFriendTask extends AsyncTask<String, Integer, String>{
+	        String bitmap = null;
+	        @Override
+	        protected String doInBackground(String... url) {
+	            try{
+	            	
+	                bitmap = DeleteFriend(url[0]);
+	            }catch(Exception e){
+	                Log.d("Background Task",e.toString());
+	            }
+	            return bitmap;
+	        }
+	 
+	        @Override
+	        protected void onPostExecute(String result) {
+	            /** Getting a reference to ImageView to display the
+	            * downloaded image
+	            */ 
+	        	if (result.contains("Record deleted successfully"))
+	            {	            	
+	            		Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+	            		Intent intent = new Intent(ListOfFriends.this, ListOfFriends.class);
+	            		intent.putExtra(EXTRA_MESSAGE, userName);
+	            		intent.putExtra(USER_ID, userID);
+	            		startActivity(intent);
+	            		finish();
+	            }
+	        	else
+	        	{
+	            	Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+	        	}	
+	            /** Showing a message, on completion of download process */
+	            //Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+	        }
+	    }
 }

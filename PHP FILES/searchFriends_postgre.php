@@ -29,8 +29,7 @@ function control()
 	}	
 	
 
-	$query="SELECT USERNAME FROM PALUSER WHERE USERNAME LIKE '$input%'";
-
+	$query="SELECT USERNAME,USERID FROM PALUSER WHERE USERNAME LIKE '$input%'";
 	
     $result = pg_query($conn, $query);	
 	
@@ -39,18 +38,27 @@ function control()
 		return 0;
 	}
 	
-	$sum="";
+	$names="";
+	$ids="";
+	$first=true;
 	while ($row = pg_fetch_row($result)) {
 	
-		foreach ($row as &$rr)
-		{
-			
-			$sum =$sum.$rr." ";
-		}
+
+			if($first){
+				$sum =$row[0];
+				$ids =$row[1];
+				$first=false;
+			}
+			else{
+				$sum =$sum." ".$row[0];
+				$ids=$ids." ".$row[1];
+			}	
+				
+
 	
 	}
 		 
-	return $sum;
+	return $sum." ".$ids;
 }	
 
 ?>	

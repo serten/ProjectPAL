@@ -29,23 +29,33 @@ function control()
 	  exit;
 	}
 
-    $result = pg_query($conn, "SELECT P.USERNAME FROM FRIENDLIST F,PALUSER P WHERE F.USERID='$u_id' AND P.USERID=F.FRIENDID");	
+    $result = pg_query($conn, "SELECT P.USERNAME,P.USERID FROM FRIENDLIST F,PALUSER P WHERE F.USERID='$u_id' AND P.USERID=F.FRIENDID");	
 	
 	if (!$result) {
 		echo "An error occurred about query.\n";
 		return 0;
 	}
-	$sum="";
+	$names="";
+	$ids="";
+	$first=true;
 	while ($row = pg_fetch_row($result)) {
 	
-		foreach ($row as &$rr)
-		{
-			$sum =$sum.$rr." ";
-		}
+
+			if($first){
+				$sum =$row[0];
+				$ids =$row[1];
+				$first=false;
+			}
+			else{
+				$sum =$sum." ".$row[0];
+				$ids=$ids." ".$row[1];
+			}	
+				
+
 	
 	}
 		 
-	return $sum;
+	return $sum." ".$ids;
 }	
 
 ?>	

@@ -32,17 +32,17 @@ while ($row = pg_fetch_row($result)) {
 echo "</table>";
 
 // this section creates a table for friendlist information
-$result = pg_query($conn, "SELECT FRIENDID, USERID, FRIENDID, FRIENDLISTTIME FROM FRIENDLIST");
+$result = pg_query($conn, "SELECT FRIENDLISTID, USERID, FRIENDID, FRIENDLISTTIME FROM FRIENDLIST");
 if (!$result) {
   echo "An error occurred.\n";
   exit;
 }
 
 echo "<hr><p>FRIENDLIST TABLE</p><table border=\"1\"><tr>
-		<th>FRIENDID:</th>
+		<th>FRIENDLISTID:</th>
 		<th>USERID:</th>
 		<th>FRIENDID:</th>
-		<th>FRIENDLIST:</th></tr>";
+		<th>FRIENDLISTTIME:</th></tr>";
 while ($row = pg_fetch_row($result)) {
   echo "<tr>";
  foreach ($row as &$rr)
