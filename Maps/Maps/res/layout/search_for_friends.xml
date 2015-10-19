@@ -1,7 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ListView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="wrap_content"
+    android:orientation="vertical" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <EditText
+            android:id="@+id/searchFriendInput"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.48"
+            android:ems="10" 
+            android:hint="Enter username">
+			
+            
+        </EditText>
+
+        <Button
+            android:id="@+id/searchFromDB"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="84dp"
+            android:layout_height="wrap_content"
+            android:text="Search" />
+    </LinearLayout>
+    
+    <ListView
+  		android:id="@android:id/list"
+  		android:layout_width="match_parent"
+ 		android:layout_height="wrap_content" >
+	</ListView> 
     
 
-</ListView>
+
+</LinearLayout>

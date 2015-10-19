@@ -54,10 +54,10 @@ public class ListOfFriends extends ListActivity{
 	@Override
 	protected void onStop() {
 	    super.onStop();  // Always call the superclass method first
-	    Intent results = new Intent(ListOfFriends.this, PalMenu.class);
+	    /*Intent results = new Intent(ListOfFriends.this, PalMenu.class);
     	results.putExtra(EXTRA_MESSAGE, userName);
     	results.putExtra(USER_ID, userID);
-		startActivity(results);
+		startActivity(results);*/
 
 	}
 	
@@ -90,7 +90,7 @@ public class ListOfFriends extends ListActivity{
                 	results.putExtra(EXTRA_MESSAGE, userName);
                 	results.putExtra(USER_ID, userID);
     				startActivity(results);
-    				finish();
+    				onPause();
                 }else{
                     Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
                 }
@@ -126,6 +126,14 @@ public class ListOfFriends extends ListActivity{
 	    setListAdapter(adapter);
 	}
 	
+	public void onBackPressed() {
+		Intent intent = new Intent(ListOfFriends.this, PalMenu.class);
+		intent.putExtra(EXTRA_MESSAGE, userName);
+		intent.putExtra(USER_ID, userID);
+		startActivity(intent);
+		finish();
+		//moveTaskToBack(true);
+	}
 
 
 	@SuppressWarnings("finally")
@@ -199,7 +207,8 @@ public class ListOfFriends extends ListActivity{
 	    	
 	    	if(result.contains("denied"))
 	    	{
-	    		
+	    		String[] parts={"NO RESULT"};
+            	createList(parts);
 	    		
 	    	}
 	    	else
