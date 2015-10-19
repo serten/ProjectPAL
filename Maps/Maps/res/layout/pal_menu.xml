@@ -37,7 +37,7 @@
         android:text="Alert Zone" />
 
     <Button
-        android:id="@+id/button3"
+        android:id="@+id/followMe"
         style="?android:attr/buttonStyleSmall"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

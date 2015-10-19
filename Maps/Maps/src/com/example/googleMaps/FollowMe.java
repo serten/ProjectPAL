@@ -1,14 +1,9 @@
 package com.example.googleMaps;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -23,7 +18,6 @@ import org.json.JSONObject;
 import android.R.menu;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
@@ -78,7 +72,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
 
-public class AlertZone extends FragmentActivity implements OnMapReadyCallback,ConnectionCallbacks, OnConnectionFailedListener,LocationListener, android.location.LocationListener {
+public class FollowMe extends FragmentActivity implements OnMapReadyCallback,ConnectionCallbacks, OnConnectionFailedListener,LocationListener, android.location.LocationListener {
 	private final LatLng LOCATION_LA = new LatLng(34.022324, -118.282522);
 	public final static String EXTRA_MESSAGE = "com.example.MESSAGE";
 	public final static String USER_ID = "com.example.USERID";
@@ -125,7 +119,6 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	private boolean startView = true;
 	private boolean holdChange = false;
 	private boolean sendMode = false;
-	private boolean checkLinkOk = false;
 	private String locality = null;
 	private int dragIndex = -1;
 	private int dragRad = 10000;
@@ -166,7 +159,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 
 		Log.d("Http", "2");
 		
-		setContentView(R.layout.alert_zone);
+		setContentView(R.layout.follow_me);
 		
 		MapFragment mpFrag = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
 		map  = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
@@ -175,354 +168,11 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		MapFragment mpFrag2 = (MapFragment) getFragmentManager().findFragmentById(R.id.map2);
 		map2  = ((MapFragment) getFragmentManager().findFragmentById(R.id.map2)).getMap();
 		mpFrag2.getMapAsync(this);
-		getEverything();
+		
 
 		map.setMyLocationEnabled(true);
 		map.getUiSettings().setZoomControlsEnabled(true);
 		map2.getUiSettings().setZoomControlsEnabled(true);
-		
-		
-		if (map2 != null) {
-			map2.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
-				
-				@Override
-				public View getInfoWindow(Marker arg0) {
-					return null;
-				}
-				
-				@Override
-				public View getInfoContents(Marker marker) {
-					if (markerWithInfo==null)
-						markerWithInfo = marker;
-					View v = getLayoutInflater().inflate(R.layout.info_window, null);
-					
-					TextView tvLocality = (TextView) v.findViewById(R.id.tv_locality);
-					TextView tvLat = (TextView) v.findViewById(R.id.tv_lat);
-					TextView tvLng = (TextView) v.findViewById(R.id.tv_lng);
-					TextView tvSnippet = (TextView) v.findViewById(R.id.tv_snippet);
-					
-					LatLng ll = markerWithInfo.getPosition();
-					Geocoder gc = new Geocoder(AlertZone.this);
-					List<Address> list = null;
-					
-					
-					try {
-						list = gc.getFromLocation(ll.latitude, ll.longitude, 1);
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				
-					Address add = list.get(0);
-					locality = add.getLocality();
-					
-					tvLocality.setText(locality);
-					tvLat.setText("Latitude: " + String.format("%.6f", ll.latitude));
-					tvLng.setText("Longitude: " + String.format("%.6f", ll.longitude));
-					//tvLocality.setText(markerWithInfo.getSnippet());
-					
-
-				
-					return v;
-					}
-					
-			});
-
-	}
-		
-		
-		
-		map2.setOnMarkerClickListener(new OnMarkerClickListener() {
-
-			
-			@Override
-			public boolean onMarkerClick(Marker markerSel) {
-				
-				// TODO Auto-generated method stub
-				Log.d("error1 ","markListenr");
-				if (markerWithInfo!=null){
-					boolean infoShownTemp = infoShown;
-					if (infoShown && markerWithInfo.equals(markerSel)){
-						markerSel.hideInfoWindow();
-						infoShown = false;
-					}
-					if (!infoShownTemp || !markerWithInfo.equals(markerSel)){
-						markerWithInfo = markerSel;
-						markerSel.showInfoWindow();
-						infoShown = true;
-					}
-				}else{
-					markerWithInfo = markerSel;
-					markerSel.showInfoWindow();
-					infoShown = true;
-				}
-				
-				for (int i = 0; i<counterPoly;i++){
-					Log.d("error2 ","markListenr");
-					if (markers.get(i).size()!=0 && markerSel.equals(markers.get(i).get(0))){
-						Log.d("mklisten-1 ","markListenr");
-						markerSel.hideInfoWindow();
-						List<List<Marker>> markersTemp = new ArrayList<List<Marker>>(); 
-						ArrayList<Polygon> polyShapeTemp = new ArrayList<Polygon>();
-						//ArrayList<Marker> markerTemp = new ArrayList<Marker>();
-						//ArrayList<Circle> circShapeTemp = new ArrayList<Circle>();
-						ArrayList<Integer> polyTypeTemp = new ArrayList<Integer>();
-						Log.d("mklisten-2 ","markListenr");
-						for (int k=0;k<counterPoly;k++){
-							Log.d("mklisten-3 ","markListenr");
-							Log.d("counterPoly= ",String.valueOf(counterPoly));
-							if (k!=i){
-								Log.d("k= ",String.valueOf(k));
-								markersTemp.add(markers.get(k));
-								polyShapeTemp.add(polyShape.get(k));
-								polyTypeTemp.add(polyType.get(k));
-							}
-						}
-						
-						Log.d("error3 ","markListenr");
-						for (Marker mark : markers.get(i)) {
-							Log.d("error4 ","markListenr");
-							mark.remove();
-						}
-						Log.d("error5 ","markListenr");
-						Log.d("i ",String.valueOf(i));
-						Log.d("shape.size(): ",String.valueOf(polyShape.size()));
-						polyShape.get(i).remove();
-						Log.d("error5.1 ","markListenr");
-						for (int j = i;j<counterPoly-1;j++) {
-							Log.d("error6 ","markListenr");
-							markers.set(j, markers.get(j+1));
-							Log.d("error7 ","markListenr");
-							polyShape.set(j,polyShape.get(j+1));
-							Log.d("error8 ","markListenr");
-							polyType.set(j,polyType.get(j+1));
-						}
-						
-						Log.d("error10","markListenr");
-						polyShape.set(counterPoly-1, null);
-						Log.d("error11","markListenr");
-						polyType.set(counterPoly-1, null);
-						
-						
-						Log.d("error9","markListenr");
-						//markers.get(counterPoly-1).clear();
-						markers = markersTemp;
-						polyShape = polyShapeTemp;
-						polyType = polyTypeTemp;
-						counterPoly--;
-						Log.d("counterPoly: ",String.valueOf(counterPoly));
-						Log.d("markers.size(): ",String.valueOf(markers.size()));
-						Log.d("polyShape.size(): ",String.valueOf(polyShape.size()));
-						Log.d("error ","counterPoly==0");
-						if (counterPoly ==0){
-							markers = new ArrayList<List<Marker>>();
-							polyShape = new ArrayList<Polygon>();
-							polyType = new ArrayList<Integer>();
-						}
-							
-						Log.d("counterPoly: ",String.valueOf(counterPoly));
-						Log.d("markers.size(): ",String.valueOf(markers.size()));
-						Log.d("polyShape.size(): ",String.valueOf(polyShape.size()));
-						Log.d("errorend ","markListenr");
-						break;
-					}
-				}
-				for (int i = 0; i<counterCirc;i++){
-					Log.d("error2 ","markListenr");
-					if (marker.size()!=0 && markerSel.equals(marker.get(i))){
-						infoShown = false;
-						markerWithInfo.hideInfoWindow();
-						ArrayList<Marker> markerTemp = new ArrayList<Marker>();
-						ArrayList<Circle> circShapeTemp = new ArrayList<Circle>();
-						ArrayList<Integer> circTypeTemp = new ArrayList<Integer>();
-						//ArrayList<Marker> markerTemp = new ArrayList<Marker>();
-						//ArrayList<Circle> circShapeTemp = new ArrayList<Circle>();
-						for (int k=0; k<counterCirc; k++){
-							if (k!=i){
-								markerTemp.add(marker.get(k));
-								circShapeTemp.add(circShape.get(k));
-								circTypeTemp.add(circType.get(k));
-							}
-						}
-						
-						Log.d("error3 ","markListenr");
-						marker.get(i).remove();
-						
-						Log.d("error5 ","markListenr");
-						Log.d("i ",String.valueOf(i));
-						Log.d("circShape.size(): ",String.valueOf(circShape.size()));
-						circShape.get(i).remove();
-						Log.d("error5.1 ","markListenr");
-						for (int j = i; j<counterCirc-1; j++) {
-							Log.d("error6 ","markListenr");
-							marker.set(j, marker.get(j+1));
-							Log.d("error7 ","markListenr");
-							circShape.set(j,circShape.get(j+1));
-							circType.set(j,circType.get(j+1));
-						}
-						
-						Log.d("error10","markListenr");
-						circShape.set(counterCirc-1, null);
-						Log.d("error9","markListenr");
-						marker = markerTemp;
-						circShape = circShapeTemp;
-						circType = circTypeTemp;
-						counterCirc--;
-						Log.d("counterCirc: ",String.valueOf(counterCirc));
-						Log.d("marker.size(): ",String.valueOf(marker.size()));
-						Log.d("circShape.size(): ",String.valueOf(circShape.size()));
-						Log.d("error ","counterPoly==0");
-						if (counterCirc ==0){
-							marker = new ArrayList<Marker>();
-							circShape = new ArrayList<Circle>();
-							circTypeTemp =  new ArrayList<Integer>();
-							//polyType = new ArrayList<Integer>();
-						}
-							
-						Log.d("counterCirc: ",String.valueOf(counterCirc));
-						Log.d("marker.size(): ",String.valueOf(marker.size()));
-						Log.d("circShape.size(): ",String.valueOf(circShape.size()));
-						Log.d("errorend ","markListenr");
-						break;
-					}
-				}
-				
-				/*AlertDialog.Builder builder = new AlertDialog.Builder(null);
-				builder.setTitle("What do you want to do?")
-						.setCancelable(false)
-						.setNegativeButton("Cancel",
-								new DialogInterface.OnClickListener() {
-									public void onClick(DialogInterface dialog,
-											int id) {
-										dialog.cancel();
-									}
-								})
-
-						.setPositiveButton("Delete the polygon or circle",
-								new DialogInterface.OnClickListener() {
-									public void onClick(DialogInterface dialog,
-											int id) {
-										if (marker.equals(markers.get(0))){
-											marker.remove();
-										}
-									}
-								});
-				AlertDialog alert = builder.create();
-				alert.show();*/
-				return true;
-			}
-			
-		});
-		//addListener(new markers.get(i).onClickHandler({
-		  //  infowindow.open(map2, marker);
-		  // }));
-
-
-		map2.setOnMapClickListener(new OnMapClickListener() {
-
-			@Override
-			public void onMapClick(LatLng ll) {
-				if (!infoShown){
-					Geocoder gc = new Geocoder(AlertZone.this);
-					List<Address> list = null;
-	
-					try {
-						list = gc.getFromLocation(ll.latitude, ll.longitude, 1);
-					} catch (IOException e) {
-						e.printStackTrace();
-						return;
-					}
-	
-					Address add = list.get(0);
-					locality = add.getLocality();
-					AlertZone.this.setMarker(ll.latitude, ll.longitude);
-				}else{
-					markerWithInfo.hideInfoWindow();
-					infoShown = false;
-				}
-					
-			}
-
-		});
-		
-		map2.setOnMarkerDragListener(new OnMarkerDragListener() {
-			
-			@Override
-			public void onMarkerDragStart(Marker markerDragged) {
-				// TODO Auto-generated method stub
-				onDrag = true;
-				circleDrag = false;
-				for (int i = 0 ; i<counterPoly;i++){
-					for (int j = 0 ; j < polyType.get(i) ;j++){
-						if (markers.get(i).get(j).equals(markerDragged)){
-							markerOnDrag = markerDragged;
-							dragIndex = i;
-							break;
-						}
-					}
-				}
-				
-				if (dragIndex == -1){
-					for (int i = 0 ; i<counterCirc;i++){
-						if (marker.get(i).equals(markerDragged)){
-							markerOnDrag = markerDragged;
-							dragIndex = i;
-							dragRad = circType.get(i);
-							circleDrag = true;
-							break;
-						}
-					}
-				}
-			}
-			
-			@Override
-			public void onMarkerDragEnd(Marker marker) {
-				// TODO Auto-generated method stub
-
-				if (infoShown && markerWithInfo.equals(marker)){
-					marker.hideInfoWindow();
-					marker.showInfoWindow();
-				}
-				dragIndex = -1;
-				onDrag = false;				
-			}
-			
-			@Override
-			public void onMarkerDrag(Marker arg0) {
-				// TODO Auto-generated method stub
-				
-				if (circleDrag == false){
-					PolygonOptions options = null;
-					polyShape.get(dragIndex).remove();
-					options = new PolygonOptions()
-					.fillColor(0x330000FF)
-					.strokeWidth(3)
-					.strokeColor(Color.BLUE);
-					Log.d("errDrag","ok3");
-					for (int i = 0; i < polyType.get(dragIndex); i++) {
-						options.add(markers.get(dragIndex).get(i).getPosition());
-					}
-					Log.d("errDrag","ok5");
-					polyShape.set(dragIndex,map2.addPolygon(options));
-				}else{
-					CircleOptions options = null;
-					circShape.get(dragIndex).remove();
-					options = new CircleOptions()
-					.center(marker.get(dragIndex).getPosition())
-					.radius(dragRad)
-					.fillColor(0x66ff0000)
-					.strokeWidth(3)
-					.strokeColor(Color.CYAN);
-					circShape.set(dragIndex,map2.addCircle(options));
-
-				}
-				
-				onDrag = true;
-				
-			}
-		});
-		
-		//map.addMarker(new MarkerOptions().position(LOCATION_LA).title("Find me here! \n Suleyman-Keyvan-Ali").draggable(false));
 		eT2 = (EditText) findViewById(R.id.editText2);
 		eT3 = (EditText) findViewById(R.id.editText3);
 		
@@ -555,7 +205,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	protected void setMarker(double latitude, double longitude) {
 		// TODO Auto-generated method stub
 		Log.d("error1 ","set");
-		Geocoder gc = new Geocoder(AlertZone.this);
+		Geocoder gc = new Geocoder(FollowMe.this);
 		List<Address> list = null;
 		try {
 			list = gc.getFromLocation(latitude, longitude, 1);
@@ -627,7 +277,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 					.icon(BitmapDescriptorFactory.fromResource(R.drawable.but_close)).draggable(true);
 					markers.get(counterPoly).get(0).remove();
 					markers.get(counterPoly).set(0,map2.addMarker(options));
-					drawPolygon();
+					//drawPolygon();
 				}
 				Log.d("error6 ","set");
 			
@@ -646,7 +296,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			//circ_tracker = cirCon;
 			options.icon(BitmapDescriptorFactory.fromResource(R.drawable.but_close)).anchor(0.5f, 0.5f).title(locality);
 			marker.add(map2.addMarker(options));
-			drawCircle(marker.get(counterCirc).getPosition());
+			//drawCircle(marker.get(counterCirc).getPosition());
 		}
 	}
 
@@ -835,30 +485,13 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			but.setText("Hold is Off");
 			but.setBackgroundColor(Color.GRAY);
 			holdChange = false;
-			removeEverything();
-			counterPoly = 0;
-			polyType = new ArrayList<Integer>();
 		}else{
 			Log.d("hold","is On");
 			but.setText("Hold is On");
 			but.setBackgroundColor(Color.GREEN);
-			counterPoly = 0 ;
-			polyType = new ArrayList<Integer>();
-			Log.d("polyShape.size(): ",String.valueOf(polyShape.size()));
-			if (polyShape.size()!=0 && !cirCon){
-				Log.d("some-er","why?");
-				polyType.add(poly_num);
-				counterPoly ++;
-			}
-			if (polyShape.size()!=0 && cirCon){
-				polyType.add(markers.get(0).size());
-				counterPoly ++;
-			}
 				
 			holdChange = true;
 		}
-		
-		
 	}
 
 
@@ -1044,17 +677,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		}
     }
     
-    private class shapeSend extends AsyncTask<String, Integer, String>{ // X,Y,Z
-    	
-    	protected ProgressDialog progressDialog;
-
-        @Override
-        protected void onPreExecute()
-        {
-            super.onPreExecute();
-            progressDialog = ProgressDialog.show(AlertZone.this, "Sending The Zones ...", "Please wait until the submit is complete!", true, false);
-        }
-    	
+   /* private class shapeSend extends AsyncTask<String, Integer, String>{ // X,Y,Z
     	protected String doInBackground(String... params) { // Z,X
     		 
     		try {
@@ -1079,7 +702,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		}
 
 		protected void onPostExecute(String result) { // Z
-			progressDialog.dismiss();
+			
 		}
 		
 		
@@ -1087,73 +710,9 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			super.onCancelled(result);
 		}
     }
-    
-    private class checkLinkExistence extends AsyncTask<String, Integer, Integer>{ // X,Y,Z
-    	
-    	protected Integer doInBackground(String... params) { // Z,X
-		    URL u = null;
-			try {
-				u = new URL ("http://cs-server.usc.edu:1111/"+userName+"-allMarkers.txt");
-			} catch (MalformedURLException e2) {
-				// TODO Auto-generated catch block
-				e2.printStackTrace();
-			}
-			HttpURLConnection huc = null;
-			try {
-				huc = ( HttpURLConnection )  u.openConnection ();
-			} catch (IOException e3) {
-				// TODO Auto-generated catch block
-				e3.printStackTrace();
-			} 
-			try {
-				huc.setRequestMethod ("GET");
-			} catch (ProtocolException e2) {
-				// TODO Auto-generated catch block
-				e2.printStackTrace();
-			}  //OR  huc.setRequestMethod ("HEAD"); 
-			try {
-				huc.connect () ;
-			} catch (IOException e2) {
-				// TODO Auto-generated catch block
-				e2.printStackTrace();
-			} 
-			try {
-				int code = huc.getResponseCode() ;
-				return code;
-			} catch (IOException e2) {
-				// TODO Auto-generated catch block
-				e2.printStackTrace();
-			}
-			return null;
-    	}
-
-		protected void onPostExecute(Integer result) { // Z
-
-			if (result==200)
-				checkLinkOk = true;
-			Log.d("checkLinkOk=",String.valueOf(checkLinkOk));
-			Log.d("resultOnPost=",String.valueOf(result));
-		}
-		
-		
-		protected void onCancelled (Integer result){
-			super.onCancelled(result);
-		}
-    }
-	
+    */
 
     private class polyShapeGet extends AsyncTask<String, Integer, ArrayList<PolygonOptions>>{ // X,Y,Z
-    	
-
-
-        protected ProgressDialog progressDialog;
-
-        @Override
-        protected void onPreExecute()
-        {
-            super.onPreExecute();
-            progressDialog = ProgressDialog.show(AlertZone.this, "Loading Poly and Circle Zones...", "Please wait until the retrieve is complete!", true, false);
-        }
     	
     	protected ArrayList<PolygonOptions> doInBackground(String... params) { // Z,X
     		
@@ -1163,7 +722,6 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				HttpGet get = new HttpGet(url.toString());
 				HttpClient client = new DefaultHttpClient();
 				HttpResponse r = client.execute(get);
-				
 				int status = r.getStatusLine().getStatusCode();
 				String data = null;
 				JSONObject explrObject = null;
@@ -1213,7 +771,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 					return options;
 					
 				} else {
-					Toast.makeText(AlertZone.this, "error",
+					Toast.makeText(FollowMe.this, "error",
 							Toast.LENGTH_SHORT);
 				}
 
@@ -1232,12 +790,11 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		}
 
 		protected void onPostExecute(ArrayList<PolygonOptions> result) { // Z
-
 			if (result!=null){
 				for (int i = 0; i < result.size(); i++) {
 					markers.add(new ArrayList<Marker>());
 					for (int j = 0; j < result.get(i).getPoints().size(); j++) {
-						Geocoder gc = new Geocoder(AlertZone.this);
+						Geocoder gc = new Geocoder(FollowMe.this);
 						List<Address> list = null;
 						try {
 							list = gc.getFromLocation(result.get(i).getPoints().get(j).latitude, result.get(i).getPoints().get(j).longitude, 1);
@@ -1263,7 +820,6 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 					polyShapeMap1.add(map.addPolygon(result.get(i)));
 				}
 			}
-			progressDialog.dismiss();
 		}
 		
 		
@@ -1274,16 +830,6 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     
     
     private class circShapeGet extends AsyncTask<String, Integer, ArrayList<CircleOptions>>{ // X,Y,Z
-    	
-    	
-    	protected ProgressDialog progressDialog;
-
-        @Override
-        protected void onPreExecute()
-        {
-            super.onPreExecute();
-            progressDialog = ProgressDialog.show(AlertZone.this, "Loading Poly and Circle Zones ...", "Please wait until the retrieve is complete!", true, false);
-        }
     	
     	protected ArrayList<CircleOptions> doInBackground(String... params) { // Z,X
     		
@@ -1345,7 +891,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 					return options;
 					
 				} else {
-					Toast.makeText(AlertZone.this, "error",
+					Toast.makeText(FollowMe.this, "error",
 							Toast.LENGTH_SHORT);
 				}
 
@@ -1369,7 +915,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			if (result!=null){
 				for (int i = 0; i < result.size(); i++) {
 					
-					Geocoder gc = new Geocoder(AlertZone.this);
+					Geocoder gc = new Geocoder(FollowMe.this);
 					List<Address> list = null;
 					try {
 						list = gc.getFromLocation(result.get(i).getCenter().latitude, result.get(i).getCenter().longitude, 1);
@@ -1394,7 +940,6 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				}	
 			}
 			Log.d("Onpostexecute-3","End");
-			progressDialog.dismiss();
 		}
 		
 		
@@ -1556,25 +1101,11 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.alert_zone_menu, menu);
+		getMenuInflater().inflate(R.menu.follow_me_menu, menu);
 		return true;
 	}
 	
-	
-	public void getEverything(){
-
-		int linkStatus = 0;
-		if (!checkLinkOk){
-			try {
-				linkStatus = new checkLinkExistence().execute().get();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ExecutionException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
+	/*public void getEverything(){
 		eraseMap1();
 		holdChange = false;
 		removeEverything();
@@ -1589,14 +1120,10 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	 
 		marker = new ArrayList<Marker>();
 		circShape = new ArrayList<Circle>();
-		
-		if (linkStatus==200 || checkLinkOk){ //404 is for not OK
-				new polyShapeGet().execute();
-				new circShapeGet().execute();
-		}else{
-				Toast.makeText(AlertZone.this," Your Alert Zone Preference \r\n is Not Available! Set it Up!",Toast.LENGTH_LONG).show();
-		}
-	}
+		new polyShapeGet().execute();
+		new circShapeGet().execute();
+
+	}*/
 	
 	
 	public void eraseMap1(){
@@ -1616,7 +1143,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		}
 	}
 	
-	public void saveShapes() {
+	/*public void saveShapes() {
 		boolean startIs = true;
 		if (counterPoly==0){
 			String URLMarker = "http://cs-server.usc.edu:1111/allMarkers.php/?start=" + startIs + "&user="+userName
@@ -1688,107 +1215,40 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			new shapeSend().execute(LinkMarker);
 		}
 	}
-	
+	*/
 	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// TODO Auto-generated method stub
-		//MenuItem map3 = (MenuItem) findViewById(R.id.map3);
-		
 		switch (item.getItemId()) {
-		case R.id.send:
-			Log.d("send0", "Hello");
-			
-			AlertDialog.Builder builder = new AlertDialog.Builder(this);
-			builder.setTitle("Save to Server")
-					.setCancelable(false)
-					.setNegativeButton("Cancel",
-							new DialogInterface.OnClickListener() {
-								public void onClick(DialogInterface dialog,
-										int id) {
-									dialog.cancel();
-									Toast.makeText(AlertZone.this,
-											"Save Cancelled",
-											Toast.LENGTH_SHORT).show();
-								}
-							})
-
-					.setPositiveButton("Yes! Save them!",
-							new DialogInterface.OnClickListener() {
-								public void onClick(DialogInterface dialog,
-										int id) {
-									Log.d("dia-1", "Hello");
-									saveShapes();
-									Log.d("dia-2", "Hello");
-									Toast.makeText(AlertZone.this,
-											"Shapes are being saved ...",
-											Toast.LENGTH_SHORT).show();
-								}
-							});
-			AlertDialog alert = builder.create();
-			alert.show();
-			
-			break;
-		case R.id.gets:
-			getEverything();
-			
-			break;
-		case R.id.map3:
-			poly_num = 3;
+		
+		case R.id.settings:
 			item.setChecked(true);
-			cirCon = false;
 			break;
-		case R.id.map4:
-			poly_num = 4;
-			//map3.setChecked(false);
+		case R.id.test:
 			item.setChecked(true);
-			cirCon = false;
 			break;
-		case R.id.map5:
-			poly_num = 5;
+		case R.id.test1:
 			item.setChecked(true);
-			cirCon = false;
 			break;
-		case R.id.map6:
-			poly_num = 6;
+		case R.id.test2:
 			item.setChecked(true);
-			cirCon = false;
 			break;
-		case R.id.circle:
+		case R.id.test3:
 			item.setChecked(true);
-			cirCon = true;
 			break;
-		case R.id.r5000:
+		case R.id.test4:
 			item.setChecked(true);
-			circRad = 5000;
-			cirCon = true;
-			break;
-		case R.id.r10000:
-			item.setChecked(true);
-			circRad = 10000;
-			cirCon = true;
-			break;
-		case R.id.r20000:
-			item.setChecked(true);
-			circRad = 20000;
-			cirCon = true;
-			break;
-		case R.id.r40000:
-			item.setChecked(true);
-			circRad = 40000;
-			cirCon = true;
 			break;
 		
 		default:
-			break;
-		
-		
+			break;	
 		}
 		return super.onOptionsItemSelected(item);
 	}
     
     public void onBackPressed() {
-    	Intent intent = new Intent(AlertZone.this,PalMenu.class);
+    	Intent intent = new Intent(FollowMe.this,PalMenu.class);
     	intent.putExtra(EXTRA_MESSAGE, userName);
     	intent.putExtra(USER_ID, userID);
 		startActivity(intent);
@@ -1796,8 +1256,6 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		finish();
 		//moveTaskToBack(true);
     }
-    
-    
 	
     
     public void onRestoreInstanceState(Bundle savedInstanceState) {

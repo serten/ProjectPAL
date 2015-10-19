@@ -68,6 +68,7 @@ public class PalMenu extends Activity{
         
         //frindlist button
         Button listOfFriends = (Button) findViewById(R.id.listOfFriends);
+        Button followMe = (Button) findViewById(R.id.followMe);
         
         TextView tVW = (TextView) findViewById(R.id.tVW);
         tVW.setTextColor(Color.RED);
@@ -116,6 +117,24 @@ public class PalMenu extends Activity{
                 if(isNetworkAvailable()){
                     /** Getting a reference to Edit text containing url */
                 	Intent results = new Intent(PalMenu.this, ListOfFriends.class);
+                	results.putExtra(EXTRA_MESSAGE, userName);
+                	results.putExtra(USER_ID, userID);
+    				startActivity(results);
+    				finish();
+                }else{
+                    Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        
+        
+        followMe.setOnClickListener(new OnClickListener() {
+         	 
+            @Override
+            public void onClick(View v) {
+                if(isNetworkAvailable()){
+                    /** Getting a reference to Edit text containing url */
+                	Intent results = new Intent(PalMenu.this, FollowMe.class);
                 	results.putExtra(EXTRA_MESSAGE, userName);
                 	results.putExtra(USER_ID, userID);
     				startActivity(results);
