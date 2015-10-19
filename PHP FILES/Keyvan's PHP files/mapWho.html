@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+	<body>
+	
+	<div id="p1"></div>
+		<script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+	<script type="text/javascript">
+	
+	var fileInUse;
+	$(document).ready(function(){
+			
+			$.get('/mapsUserInUse.txt', function(data) {    
+				fileInUse = '/'+data;
+				fclose('mapsUserInUse.txt');
+			});
+			
+			// LOAD file and split line by line and append divs
+			$.get(fileInUse, function(data) {    
+				var lines = data.split("\n");
+
+				$.each(lines, function(n, elem) {
+				   $('#p1').append('<div>' + elem + '</div>');
+				});
+				fclose($fileInUse);
+			});
+	});
+	var myVar = setInterval(myTimer, 3500);
+
+	function myTimer() {
+		$.get('/mapsUserInUse.txt', function(data) {    
+				fileInUse = '/'+data;
+			fclose('mapsUserInUse.txt');
+			});
+		$.get(fileInUse, function(data) {    
+			var lines = data.split("\n");
+			$('#p1').html('');
+			$('#p1').append('<div>' + fileInUse + '</div>');
+			$.each(lines, function(n, elem) {
+			   $('#p1').append('<div>' + elem + '</div>');
+			});
+			fclose($fileInUse);
+		});
+			
+	}
+	
+	
+	</script>
+	
+		<NOSCRIPT>	
+	</body>
+</html>
