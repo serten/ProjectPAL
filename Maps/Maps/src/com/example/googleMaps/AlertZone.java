@@ -21,11 +21,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.R.menu;
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.app.SearchManager;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Address;
@@ -36,17 +39,25 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.internal.view.menu.MenuView.ItemView;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TabHost;
 import android.widget.TabHost.TabSpec;
 import android.widget.TextView;
@@ -129,6 +140,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	private String locality = null;
 	private int dragIndex = -1;
 	private int dragRad = 10000;
+	private int counterWait;
 	private int circRad = 10000;
 	private boolean circleDrag = false;
 	ArrayList<Polygon> polyShape = new ArrayList<Polygon>();
@@ -147,9 +159,18 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	
 	Activity activity;
 	Bundle info;
-	
-	private LatLng circCenter;
+	//private LatLng circCenter;
     
+	private DrawerLayout mDrawerLayout;
+    private ListView mDrawerList;
+    private ActionBarDrawerToggle mDrawerToggle;
+
+    private CharSequence mDrawerTitle;
+    private CharSequence mTitle;
+    private String[] mListTitles;
+	
+    
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -168,6 +189,17 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		
 		setContentView(R.layout.alert_zone);
 		
+		
+		mListTitles = getResources().getStringArray(R.array.myMaps_array);
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerList = (ListView) findViewById(R.id.left_drawer);
+        Log.d("onCreate","-1.5");
+        // set a custom shadow that overlays the main content when the drawer opens
+        mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+        Log.d("onCreate","-1.6");
+        // set up the drawer's list view with items and click listener
+        
+		
 		MapFragment mpFrag = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
 		map  = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
 		mpFrag.getMapAsync(this);
@@ -177,6 +209,39 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		mpFrag2.getMapAsync(this);
 		getEverything();
 
+		mDrawerList.setAdapter(new ArrayAdapter<String>(this,R.layout.follow_me_drawer_list_item, mListTitles));
+        Log.d("onCreate","-1.7");
+        mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
+        Log.d("onCreate","-2");        
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+        getActionBar().setHomeButtonEnabled(true);
+        Log.d("onCreate","-3");
+        mDrawerToggle = new ActionBarDrawerToggle(
+                this,                  /* host Activity */
+                mDrawerLayout,         /* DrawerLayout object */
+                R.drawable.ic_drawer,  /* nav drawer image to replace 'Up' caret */
+                R.string.drawer_open,  /* "open drawer" description for accessibility */
+                R.string.drawer_close  /* "close drawer" description for accessibility */
+                ) {
+            public void onDrawerClosed(View view) {
+                Log.d("onCreate","-4");
+                //getActionBar().setTitle(mTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+
+            public void onDrawerOpened(View drawerView) {
+                Log.d("onCreate","-5");
+                //getActionBar().setTitle(mDrawerTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+        };
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+
+        if (savedInstanceState == null) {
+            Log.d("onCreate","-6");
+            selectItem(0);
+        }
+		
 		map.setMyLocationEnabled(true);
 		map.getUiSettings().setZoomControlsEnabled(true);
 		map2.getUiSettings().setZoomControlsEnabled(true);
@@ -633,9 +698,6 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			
 			
 		} else{
-			
-			circCenter = new LatLng(latitude, longitude);
-			
 			if (markers.size() != 0){
 				removeEverything();
 			}
@@ -709,7 +771,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			.strokeColor(Color.CYAN)
 			.strokeWidth(3);
 			circShape.add(map2.addCircle(options));
-			counterCirc = counterCirc +1;
+			counterCirc ++;
 		}else{
 				circShape = new ArrayList<Circle>();
 				for (int j = 0; j < counterCirc; j++) {
@@ -736,7 +798,6 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				Log.d("error1size ",String.valueOf(polyShape.size()));
 				if (polyShape.size()!=0 && polyShape.get(0) != null){
 					Log.d("error2 ","rmveth");
-					
 					Log.d("error3 ","rmveth");
 					Log.d("error3CP ",String.valueOf(counterPoly));
 					for (int i = counterPoly; i>0 ; i--) {
@@ -760,6 +821,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 						marker.get(i-1).remove();
 						circShape.get(i-1).remove();
 					}
+					marker.clear();
 					//marker = new ArrayList<Marker>();
 					circShape = new ArrayList<Circle>();
 					Log.d("error7 ","rmveth");
@@ -886,23 +948,24 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     
 	
 	
-	public void onClick_Sat(View v) {
+	public void onClick_Sat() {
 //		CameraUpdate update = CameraUpdateFactory.newLatLng(LOCATION_BURNABY);
 		map.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+		map2.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
 		CameraUpdate update = CameraUpdateFactory.newLatLngZoom(LOCATION_LA, 9);
 		map.animateCamera(update);
 	}
-	public void onClick_Norm(View v) {
+	public void onClick_Norm() {
 		map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+		map2.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 		CameraUpdate update = CameraUpdateFactory.newLatLngZoom(LOCATION_LA, 9);
-		map.animateCamera(update);
-		
+		map.animateCamera(update);		
 	}
-	public void onClick_Ter(View v) {
+	public void onClick_Ter() {
 		map.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+		map2.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
 		CameraUpdate update = CameraUpdateFactory.newLatLngZoom(LOCATION_LA, 9);
 		map.animateCamera(update);
-		
 	}
 
 	@Override
@@ -1004,7 +1067,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			myTask = new LongLatInfo();
 			if (!myTask.isCancelled())
 				myTask.execute(Link);
-			
+
         	eT2.setText(String.format("%.6f",i));
         	eT3.setText(String.format("%.6f",j));
         	
@@ -1046,7 +1109,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     
     private class shapeSend extends AsyncTask<String, Integer, String>{ // X,Y,Z
     	
-    	protected ProgressDialog progressDialog;
+    	/*protected ProgressDialog progressDialog;
 
         @Override
         protected void onPreExecute()
@@ -1054,7 +1117,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
             super.onPreExecute();
             progressDialog = ProgressDialog.show(AlertZone.this, "Sending The Zones ...", "Please wait until the submit is complete!", true, false);
         }
-    	
+    	*/
     	protected String doInBackground(String... params) { // Z,X
     		 
     		try {
@@ -1079,7 +1142,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		}
 
 		protected void onPostExecute(String result) { // Z
-			progressDialog.dismiss();
+			//progressDialog.dismiss();
 		}
 		
 		
@@ -1394,6 +1457,9 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				}	
 			}
 			Log.d("Onpostexecute-3","End");
+			mListTitles[2] = "# Polygone Zones: "+String.valueOf(counterPoly);
+			mListTitles[3] = "# Circle Zones: "+String.valueOf(counterCirc);
+			mListTitles[4] = "# Total Zones: "+String.valueOf(counterPoly+counterCirc);
 			progressDialog.dismiss();
 		}
 		
@@ -1557,9 +1623,10 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.alert_zone_menu, menu);
+		getMenuInflater().inflate(R.menu.alert_zone_actionbar, menu);
 		return true;
 	}
-	
+
 	
 	public void getEverything(){
 
@@ -1694,6 +1761,10 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// TODO Auto-generated method stub
 		//MenuItem map3 = (MenuItem) findViewById(R.id.map3);
+		if (mDrawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+		
 		
 		switch (item.getItemId()) {
 		case R.id.send:
@@ -1817,5 +1888,108 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	}
 
 
+    /* Called whenever we call invalidateOptionsMenu() */
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        // If the nav drawer is open, hide action items related to the content view
+        boolean drawerOpen = mDrawerLayout.isDrawerOpen(mDrawerList);
+        //menu.findItem(R.id.action_websearch).setVisible(!drawerOpen);
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+
+
+    /* The click listner for ListView in the navigation drawer */
+    private class DrawerItemClickListener implements ListView.OnItemClickListener {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            selectItem(position);
+        }
+    }
+
+    private void selectItem(int position) {
+
+    	switch (position){
+	    	case 0:
+	    		Toast.makeText(this, "KS will complete it later. Not Working Now!",Toast.LENGTH_SHORT).show();
+	    		break;
+    		case 1:
+    			Toast.makeText(this, "KS will complete it later. Not Working Now!",Toast.LENGTH_SHORT).show();
+				break;
+    		case 5:
+				Toast.makeText(this, "KS will complete it later. Not Working Now!",Toast.LENGTH_SHORT).show();   
+				break;
+			case 6:
+				Toast.makeText(this, "KS will complete it later. Not Working Now!",Toast.LENGTH_SHORT).show();   
+				break;
+			case 7:
+				onClick_Norm();
+				break;
+			case 8:
+				onClick_Sat(); 			
+				break;
+			case 9:
+				onClick_Ter();   
+				break;
+    		case 10:
+    			Toast.makeText(this, "KS will complete it later. Not Working Now!",Toast.LENGTH_SHORT).show();
+    			/*counterWait = 0;
+				for (int i = 0; i < counterPoly; i++) {    			
+    				Handler[] handler = new Handler[counterPoly];
+    				handler[i].postDelayed(new Runnable() {			
+    					public void run() {
+    				     // Actions to do after 0.5 seconds
+
+    					    	Log.d("side-pol", String.valueOf(counterWait));
+    				    	Log.d("inside-pol", String.valueOf(counterWait));
+    				    	LatLng location = markers.get(counterWait).get(0).getPosition();
+    	    				CameraUpdate update = CameraUpdateFactory.newLatLngZoom(location, 9);
+    	    				map.animateCamera(update);
+    	    				counterWait++;
+    				    
+    				    }}, 2000*(i+1));
+				}
+    			for (int i = 0; i < counterCirc; i++) {
+    				counterWait = i;
+			    	Log.d("side-circ", String.valueOf(counterWait));
+    				     // Actions to do after 0.5 seconds
+    				    	Log.d("inside-circ", String.valueOf(counterWait));
+    				    	LatLng location = marker.get(counterWait).getPosition();
+    	    				CameraUpdate update = CameraUpdateFactory.newLatLngZoom(location, 9);
+    	    				map.animateCamera(update);
+    				    }*/
+    			break;
+			default:
+				break;
+    	}
+        mDrawerList.setItemChecked(position, true);
+        //setTitle(mPlanetTitles[position]);
+        mDrawerLayout.closeDrawer(mDrawerList);
+    }
+
+    @Override
+    public void setTitle(CharSequence title) {
+        //mTitle = title;
+        //getActionBar().setTitle(mTitle);
+    }
+
+    /**
+     * When using the ActionBarDrawerToggle, you must call it during
+     * onPostCreate() and onConfigurationChanged()...
+     */
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // Sync the toggle state after onRestoreInstanceState has occurred.
+        mDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // Pass any configuration change to the drawer toggls
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
 	
 }

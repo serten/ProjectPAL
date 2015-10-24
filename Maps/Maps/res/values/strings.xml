@@ -11,5 +11,23 @@
     <string name="str_tv_url">http://54.187.253.246/selectuser/login_postgre.php</string>
     <string name="str_reg_url">http://54.187.253.246/selectuser/register_postgre.php</string>
     <string name="title_activity_register_page">RegisterPage</string>
+    <string name="search_title">Search Here:</string>
+    <string name="drawer_open">Open navigation drawer</string>
+    <string name="drawer_close">Close navigation drawer</string>
+    <string name="action_websearch">Web search</string>
+    <string-array name="myMaps_array" color="#111">
+        <item>The Zones</item>
+        <item>Edit The Zones</item>
+        <item># Polygone Zones: 0</item>
+        <item># Circle Zones: 0</item>
+        <item># Total Zones: 0</item>
+        <item>Show All Friends</item>
+        <item>Select A Friend</item>
+        <item>Normal View</item>
+        <item>Satellite View</item>
+        <item>Terrain View</item>
+        <item>Take a Zone Tour</item>
+        
+    </string-array>
 
 </resources>
