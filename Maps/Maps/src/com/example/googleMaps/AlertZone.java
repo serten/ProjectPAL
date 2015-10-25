@@ -22,6 +22,7 @@ import org.json.JSONObject;
 
 import android.R.menu;
 import android.app.ActionBar;
+import android.app.ActionBar.OnNavigationListener;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -43,8 +44,11 @@ import android.os.Handler;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GravityCompat;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v4.view.MenuItemCompat.OnActionExpandListener;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.internal.view.menu.MenuView.ItemView;
+import android.support.v7.widget.SearchView;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Menu;
@@ -52,6 +56,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -169,8 +174,12 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     private CharSequence mTitle;
     private String[] mListTitles;
 	
-    
-	
+    private String[] actionsForActioBar = new String[] {
+            "Hold is On",
+            "Hols is Off",
+        };
+     
+   
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -189,7 +198,62 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		
 		setContentView(R.layout.alert_zone);
 		
+		/*mDropDownTitles = getResources().getStringArray(R.array.myDrop_Down_List);
+		mDropDownList = (ListView) findViewById(R.id.drop_down);
+		mDropDownList.setAdapter(new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_spinner_dropdown_item, mDropDownTitles));
+		//ArrayAdapter<String> adapterForDropDown = new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_spinner_dropdown_item, actionsForActioBar);
+		mDropDownList.setOnItemClickListener(new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> arg0, View arg1, int itemPosition,
+					long arg3) {
+				// TODO Auto-generated method stub
+				switch (itemPosition){
+            	case 0:
+            		if (!holdChange)
+            			holdChange();
+            		break;
+            	case 1:
+            		if (holdChange)
+            			holdChange();
+            		break;
+        		default:
+        			break;
+            	}
+				
+			}
+		});
+		*/
+		ArrayAdapter<String> adapterForDropDown = new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_spinner_dropdown_item, actionsForActioBar);
 		
+        /** Enabling dropdown list navigation for the action bar */
+        getActionBar().setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
+ 
+        /** Defining Navigation listener */
+        @SuppressWarnings("deprecation")
+		ActionBar.OnNavigationListener navigationListener = new OnNavigationListener() {
+ 
+            @Override
+            public boolean onNavigationItemSelected(int itemPosition, long itemId) {
+            	switch (itemPosition){
+            	case 0:
+            		if (!holdChange)
+            			holdChange();
+            		break;
+            	case 1:
+            		if (holdChange)
+            			holdChange();
+            		break;
+        		default:
+        			break;
+            	}
+                //Toast.makeText(getBaseContext(), "You selected : " + actionsForActioBar[itemPosition]  , Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        };
+        /** Setting dropdown items and item navigation listener for the actionbar*/
+        getActionBar().setListNavigationCallbacks(adapterForDropDown, navigationListener);
+        
 		mListTitles = getResources().getStringArray(R.array.myMaps_array);
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         mDrawerList = (ListView) findViewById(R.id.left_drawer);
@@ -209,7 +273,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		mpFrag2.getMapAsync(this);
 		getEverything();
 
-		mDrawerList.setAdapter(new ArrayAdapter<String>(this,R.layout.follow_me_drawer_list_item, mListTitles));
+		mDrawerList.setAdapter(new ArrayAdapter<String>(this,R.layout.alert_zone_drawer_list_item, mListTitles));
         Log.d("onCreate","-1.7");
         mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
         Log.d("onCreate","-2");        
@@ -889,23 +953,27 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	
 	
 	
-	public void holdChange(View v) {
+	public void holdChange() {
 		Log.d("hold","is changing");
-		Button but = (Button) findViewById(R.id.hold);
-		if(but.getText() =="Hold is On"){
+		//Button but = (Button) findViewById(R.id.hold);
+		if(holdChange){
 			Log.d("hold","is off");
-			but.setText("Hold is Off");
-			but.setBackgroundColor(Color.GRAY);
+			//but.setText("Hold is Off");
+			//but.setBackgroundColor(Color.GRAY);
 			holdChange = false;
 			removeEverything();
 			counterPoly = 0;
+			counterCirc = 0;
 			polyType = new ArrayList<Integer>();
+			circType = new ArrayList<Integer>();
 		}else{
 			Log.d("hold","is On");
-			but.setText("Hold is On");
-			but.setBackgroundColor(Color.GREEN);
-			counterPoly = 0 ;
+			//but.setText("Hold is On");
+			//but.setBackgroundColor(Color.GREEN);
+			counterPoly = 0;
+			//counterCirc = 0;
 			polyType = new ArrayList<Integer>();
+			//circType = new ArrayList<Integer>();
 			Log.d("polyShape.size(): ",String.valueOf(polyShape.size()));
 			if (polyShape.size()!=0 && !cirCon){
 				Log.d("some-er","why?");
@@ -979,8 +1047,8 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	
 	private void gotoLocation(double lat, double lng,
 			float zoom) {
-		eT2.setText(String.format("%.6f",lat));
-    	eT3.setText(String.format("%.6f",lng));
+		eT2.setText("Lat: " + String.format("%.6f",lat));
+    	eT3.setText("Long: " + String.format("%.6f",lng));
 		if (startView){
 			LatLng ll = new LatLng(lat, lng);
 			CameraUpdate update = CameraUpdateFactory.newLatLngZoom(ll, zoom);
@@ -990,7 +1058,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		}
 	}
 	
-	public void geoLocate(View v) throws IOException {
+/*	public void geoLocate(View v) throws IOException {
 		hideSoftKeyboard(v);
 		
 		EditText et = (EditText) findViewById(R.id.editText1);
@@ -1013,7 +1081,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			et.setText("");
 			Toast.makeText(this, "Please Enter a Valid Location to Look Up For You!",Toast.LENGTH_SHORT).show();
 		}
-	}
+	}*/
 	
 	
 	
@@ -1068,8 +1136,8 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			if (!myTask.isCancelled())
 				myTask.execute(Link);
 
-        	eT2.setText(String.format("%.6f",i));
-        	eT3.setText(String.format("%.6f",j));
+        	eT2.setText("Lat: " + String.format("%.6f",i));
+        	eT3.setText("Long: " + String.format("%.6f",j));
         	
         	map2.addMarker(new MarkerOptions().position(myPos).title("We Are Here! Suleyman-Keyvan-Ali"));
         }
@@ -1622,8 +1690,79 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.alert_zone_menu, menu);
-		getMenuInflater().inflate(R.menu.alert_zone_actionbar, menu);
+		getMenuInflater().inflate(R.menu.alert_zone_3_dot_menu, menu);
+		getMenuInflater().inflate(R.menu.alert_zone_search_item_actionbar, menu);
+		getMenuInflater().inflate(R.menu.alert_zone_drop_down_actionbar, menu);
+		
+		MenuItem searchItem = menu.findItem(R.id.search_icon);
+		//searchItem.collapseActionView();
+		SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
+	    searchView.setIconified(true); //to be opened without textform	    
+	    //searchView.setQuery("", true);
+	    searchView.setQueryHint("Search Your Location");
+	    searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+			
+			@Override
+			public boolean onQueryTextSubmit(String query) {
+				// TODO Auto-generated method stub
+				invalidateOptionsMenu();
+				hideSoftKeyboard(getWindow().getDecorView().getRootView());
+				Geocoder gc = new Geocoder(getBaseContext());
+				List<Address> list = null;
+				try {
+					list = gc.getFromLocationName(query, 1);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				if (!list.isEmpty()){
+					Toast.makeText(getBaseContext(), "Processing ...",Toast.LENGTH_SHORT).show();
+					Address add = list.get(0);
+					
+					String locality = add.getLocality();
+					double lat = add.getLatitude();
+					double lng = add.getLongitude();
+					startView = true;
+					gotoLocation(lat,lng,8);
+				}else{
+					//et.setText("");
+					Toast.makeText(getBaseContext(), "Please Enter a Valid Location to Look Up For You!",Toast.LENGTH_SHORT).show();
+				}
+				return true;
+			}
+			
+			@Override
+			public boolean onQueryTextChange(String arg0) {
+				// TODO Auto-generated method stub
+				return true;
+			}
+		});
+	    
+		//menuItem.
+	    // When using the support library, the setOnActionExpandListener() method is
+	    // static and accepts the MenuItem object as an argument
+	    MenuItemCompat.setOnActionExpandListener(searchItem, new OnActionExpandListener() {
+	        @Override
+	        public boolean onMenuItemActionCollapse(MenuItem item) {
+	            // Do something when collapsed
+	        	SearchView m = (SearchView) MenuItemCompat.getActionView(item);
+	        	m.setQuery("", false);
+	        	m.clearFocus();
+	        	m.setIconified(true);
+	            item.collapseActionView();//to be opened without textform
+	            return true;  // Return true to collapse action view
+	        }
+
+	        @Override
+	        public boolean onMenuItemActionExpand(MenuItem item) {
+	            // Do something when expanded
+	        	SearchView m = (SearchView) MenuItemCompat.getActionView(item);
+	        	m.onActionViewCollapsed();
+	        	m.setIconified(false);  //to be opened with textform
+	            return true;  // Return true to expand action view
+	        }
+	    });
+
 		return true;
 	}
 
@@ -1645,9 +1784,9 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		eraseMap1();
 		holdChange = false;
 		removeEverything();
-		Button but = (Button) findViewById(R.id.hold);
+		/*Button but = (Button) findViewById(R.id.hold);
 		but.setText("Hold is On");
-		but.setBackgroundColor(Color.GREEN);
+		but.setBackgroundColor(Color.GREEN);*/
 		holdChange = true;
 		
 		markers = new ArrayList<List<Marker>>(); 
@@ -1911,7 +2050,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 
     	switch (position){
 	    	case 0:
-	    		Toast.makeText(this, "KS will complete it later. Not Working Now!",Toast.LENGTH_SHORT).show();
+	    		//Toast.makeText(this, "KS will complete it later. Not Working Now!",Toast.LENGTH_SHORT).show();
 	    		break;
     		case 1:
     			Toast.makeText(this, "KS will complete it later. Not Working Now!",Toast.LENGTH_SHORT).show();
