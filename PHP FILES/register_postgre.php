@@ -26,9 +26,11 @@ function insert(){
 	  exit;
 	}
 
-
+	ini_set('date.timezone', 'America/Los_Angeles');
+	$time = date('H:i:s', time()); 
+	$date = date('Y-m-d')." ".$time;
 	
-	if (pg_query($conn, "INSERT INTO PALUSER ( USERNAME, PASSWORD) VALUES ('$u_name','$u_pass')") == TRUE) {
+	if (pg_query($conn, "INSERT INTO PALUSER ( USERNAME, PASSWORD,LASTUPDATETIME) VALUES ('$u_name','$u_pass',TIMESTAMP'$date')") == TRUE) {
 
 			echo "New record created successfully";
 	}

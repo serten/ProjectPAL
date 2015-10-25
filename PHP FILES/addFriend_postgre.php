@@ -28,7 +28,9 @@ function control()
 	  echo "An error occurred.\n";
 	  exit;
 	}	
-	
+	ini_set('date.timezone', 'America/Los_Angeles');
+	$time = date('H:i:s', time()); 
+	$date = date('Y-m-d')." ".$time;
 
 	$result = pg_query($conn, "SELECT FRIENDLISTID FROM FRIENDLIST WHERE USERID='$u_id' AND FRIENDID='$input'");	
 	
@@ -40,9 +42,9 @@ function control()
 	}
 	else{
 	
-		if (pg_query($conn, "INSERT INTO FRIENDLIST ( USERID, FRIENDID) VALUES ('$u_id','$input')") == TRUE) 
+		if (pg_query($conn, "INSERT INTO FRIENDLIST ( USERID, FRIENDID,FRIENDLISTTIME) VALUES ('$u_id','$input',TIMESTAMP'$date')") == TRUE) 
 		{
-			if (pg_query($conn, "INSERT INTO FRIENDLIST ( USERID, FRIENDID) VALUES ('$input','$u_id')") == TRUE) 
+			if (pg_query($conn, "INSERT INTO FRIENDLIST ( USERID, FRIENDID,FRIENDLISTTIME) VALUES ('$input','$u_id',TIMESTAMP'$date')") == TRUE) 
 			{
 				return "New record created successfully";
 			}

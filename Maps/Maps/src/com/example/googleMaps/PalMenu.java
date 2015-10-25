@@ -7,6 +7,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -16,6 +17,11 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
 
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.model.LatLng;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -24,6 +30,9 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.Signature;
 import android.graphics.Color;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -50,18 +59,32 @@ import android.widget.Toast;
 
 public class PalMenu extends Activity{
 
+	
 	public final static String EXTRA_MESSAGE = "com.example.MESSAGE";
 	public final static String USER_ID = "com.example.USERID";
+    protected final static String LOCATION_KEY = "location-key";
+
+	
 	String userName,userID;
+
+	
+	//save position to DB//
+	LocationManager locationManager; 
+	LocationListener locationListener; 
+	protected Location mCurrentLocation;
+	String LAT,LONG;
+	  
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
+    	
         super.onCreate(savedInstanceState);
         //getActionBar().setDisplayHomeAsUpEnabled(true);
         
         Intent intent = getIntent();
 		userName = intent.getStringExtra(Login.EXTRA_MESSAGE);
         userID = intent.getStringExtra(Login.USER_ID);
+
 		setContentView(R.layout.pal_menu);
         Button btnAlertZone = (Button) findViewById(R.id.alertZone);
         Button aboutDev = (Button) findViewById(R.id.aboutDev);
@@ -73,6 +96,8 @@ public class PalMenu extends Activity{
         TextView tVW = (TextView) findViewById(R.id.tVW);
         tVW.setTextColor(Color.RED);
         tVW.setText("Welcome "+userName);
+
+        
         /** Defining a click event listener for the button */
         btnAlertZone.setOnClickListener(new OnClickListener() {
  
@@ -119,8 +144,9 @@ public class PalMenu extends Activity{
                 	Intent results = new Intent(PalMenu.this, ListOfFriends.class);
                 	results.putExtra(EXTRA_MESSAGE, userName);
                 	results.putExtra(USER_ID, userID);
+
     				startActivity(results);
-    				finish();
+    				onPause();
                 }else{
                     Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
                 }
@@ -144,11 +170,48 @@ public class PalMenu extends Activity{
                 }
             }
         });
- 
+        
+        //location update service start
+        
         /** Setting Click listener for the download button */
         //btnAlertZone.setOnClickListener(actionToDo);
+
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        locationListener = new LocationListener() {
+      	    public void onLocationChanged(Location loc) {
+      	      // Called when a new location is found by the network location provider.
+      	    	LAT=""+loc.getLatitude();
+      	    	LONG=""+loc.getLongitude();
+      	    	NetworkTask networkTask = new NetworkTask();
+                
+                /** Starting the task created above */
+                String url="http://54.187.253.246/selectuser/updateCurrentCoordinate_postgre.php";
+                networkTask.execute(url);
+      	      //makeUseOfNewLocation(location);
+      	    }
+      	    
+      		public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+      	    public void onProviderEnabled(String provider) {}
+
+      	    public void onProviderDisabled(String provider) {}
+      	  };      
+      	  
+      	  startLocationSaving();
     }
    
+    public void startLocationSaving()
+    {
+    	Toast.makeText(getBaseContext(), "LOCATION SERVICE STARTED", Toast.LENGTH_SHORT).show();
+		PalMenu.this.locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 7000, 0, PalMenu.this.locationListener);    	
+    }
+    
+    public void endLocationSaving()
+    {
+    	 Toast.makeText(getBaseContext(), "LOCATION SERVICE ENDED", Toast.LENGTH_SHORT).show();
+		 PalMenu.this.locationManager.removeUpdates(PalMenu.this.locationListener);    	
+    }
+
     
     @Override
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -170,6 +233,7 @@ public class PalMenu extends Activity{
     private boolean isNetworkAvailable(){
         boolean available = false;
         /** Getting the system's connectivity service */
+        
         ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
  
         /** Getting active network interface  to get the network's status */
@@ -182,12 +246,97 @@ public class PalMenu extends Activity{
         return available;
     }
  
+    @SuppressWarnings("finally")
+	private String networkConnect(String strUrl) throws IOException{
+
+	        String strFileContents=null;
+	        BufferedInputStream in=null;
+	    	
+	        try{
+	            URL url = new URL(strUrl);
+	            /** Creating an http connection to communcate with url */
+	            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+	            
+	            /** Connecting to url */
+	            //urlConnection.connect();
+	            urlConnection.setRequestMethod("POST");
+	            
+	            String urlParameters = "userID="+userID+"&&lat="+LAT+"&&long="+LONG;
+	    		
+	    		// Send post request
+	            urlConnection.setDoOutput(true);
+	    		DataOutputStream wr = new DataOutputStream(urlConnection.getOutputStream());
+	    		wr.writeBytes(urlParameters);
+	    		wr.flush();
+	    		wr.close();
+
+	    		
+	            //urlConnection.connect();
+	            in = new BufferedInputStream(urlConnection.getInputStream() );
+	            byte[] contents = new byte[1024];
+
+	            int bytesRead=0;
+	             
+	            while( (bytesRead = in.read(contents)) != -1){ 
+	               strFileContents = new String(contents, 0, bytesRead);               
+	            }
+	            
+	    		
+	 
+	            /** Creating a bitmap from the stream returned from the url */
+	            
+	 
+	        }catch(Exception e){
+	            Log.d("Exception while downloading url", e.toString());
+	            
+	        }finally{
+	            in.close();
+	            return strFileContents;
+	           
+	        }
+	       
+	    }
+
+	 private class NetworkTask extends AsyncTask<String, Integer, String>{
+	        String bitmap = null;
+	        @Override
+	        protected String doInBackground(String... url) {
+	            try{
+	            	
+	                bitmap = networkConnect(url[0]);
+	            }catch(Exception e){
+	                Log.d("Background Task",e.toString());
+	            }
+	            return bitmap;
+	        }
+	 
+	        @Override
+	        protected void onPostExecute(String result) {
+	            /** Getting a reference to ImageView to display the
+	            * downloaded image
+	            */
+
+	            
+	            Log.d("7Error", "7");
+	            if (result.contains("denied")){	            	
+	            	Toast.makeText(getBaseContext(), "CURRENT POSITION CAN NOT UPDATE!", Toast.LENGTH_SHORT).show();
+	            }
+	            else
+	            {
+	            	Toast.makeText(getBaseContext(), "CURRENT POSITION UPDATED", Toast.LENGTH_SHORT).show();
+	            }
+	            /** Showing a message, on completion of download process */
+	            //Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+	        }
+	    } 
 
     
 	@Override
     protected void onPause() {
 		// TODO Auto-generated method stub
 		super.onPause();
+		endLocationSaving();
+		
 	}
     
 	@Override
@@ -224,7 +373,11 @@ public class PalMenu extends Activity{
     @Override
     public void onResume() {
         super.onResume();
+        startLocationSaving();
     }
+    
+    
+
     
  
 }
