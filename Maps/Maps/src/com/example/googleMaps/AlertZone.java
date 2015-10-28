@@ -1,5 +1,7 @@
 package com.example.googleMaps;
 
+import java.io.BufferedInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -15,7 +17,10 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -191,6 +196,10 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		Intent intent = getIntent();
 		userName = intent.getStringExtra(Login.EXTRA_MESSAGE);
 		userID = intent.getStringExtra(Login.USER_ID);
+		String n=userID.substring(0, userID.length()-7);
+		userID=n;
+			
+		
 		
 		Log.d("Http", "1.5");
 
@@ -1124,12 +1133,12 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
         	double j = (double) mCurrentLocation.getLongitude();
         	String forToast = "You are at: " + i + " , " +j;
         	//Toast.makeText(this, forToast, Toast.LENGTH_LONG).show();
-        	String URL = "http://cs-server.usc.edu:1111/maps.php/?lat="
+        	String URL = "http://54.187.253.246/selectuser/updateCurrentCoordinateGet_postgre.php/?lat="
 					+ i
 					+ "&long="
 					+ j
-					+ "&user="
-					+ userName; 
+					+ "&userID="
+					+ userID; 
 			final String Link = URL.replace(" ", "%20");
 			Log.d("Link", Link);
 			myTask = new LongLatInfo();
@@ -1290,11 +1299,21 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     		
     		ArrayList<PolygonOptions> options = new ArrayList<PolygonOptions>();
     		try {
-				StringBuilder url = new StringBuilder("http://cs-server.usc.edu:1111/"+userName+"-allMarkers.txt");
-				HttpGet get = new HttpGet(url.toString());
-				HttpClient client = new DefaultHttpClient();
+    			String strURL="http://54.187.253.246/selectuser/get_polygons_postgre.php?userID="+userID;
+    			
+				StringBuilder url = new StringBuilder(strURL);
+				HttpGet get = new HttpGet(url.toString());	
+				HttpClient client = new DefaultHttpClient();				
+				/*HttpPost post = new HttpPost(url.toString());				
+				HttpParams p=new BasicHttpParams();
+				p.setParameter("userID", userID);
+				post.setParams(p);*/
+				
 				HttpResponse r = client.execute(get);
 				
+				///////////////////////////////////////////////////////////
+				
+				/////////////////////////////////////////////////////////
 				int status = r.getStatusLine().getStatusCode();
 				String data = null;
 				JSONObject explrObject = null;
@@ -1420,13 +1439,18 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     		
     		ArrayList<CircleOptions> options = new ArrayList<CircleOptions>();
     		try {
-				StringBuilder url = new StringBuilder("http://cs-server.usc.edu:1111/"+userName+"-allMarkers.txt");
-				HttpGet get = new HttpGet(url.toString());
-				HttpClient client = new DefaultHttpClient();
+    			String strURL="http://54.187.253.246/selectuser/get_polygons_postgre.php?userID="+userID;    			
+				StringBuilder url = new StringBuilder(strURL);
+				HttpGet get = new HttpGet(url.toString());				
+				HttpClient client = new DefaultHttpClient();				
 				HttpResponse r = client.execute(get);
 				int status = r.getStatusLine().getStatusCode();
 				String data = null;
 				JSONObject explrObject = null;
+				
+				///////////////////////////////////////////////////////////
+				
+				/////////////////////////////////////////////////////////
 				
 				Log.d("Error", "test0");
 				if (status == 200) {
@@ -1796,12 +1820,12 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		marker = new ArrayList<Marker>();
 		circShape = new ArrayList<Circle>();
 		
-		if (linkStatus==200 || checkLinkOk){ //404 is for not OK
+		//if (linkStatus==200 || checkLinkOk){ //404 is for not OK
 				new polyShapeGet().execute();
 				new circShapeGet().execute();
-		}else{
-				Toast.makeText(AlertZone.this," Your Alert Zone Preference \r\n is Not Available! Set it Up!",Toast.LENGTH_LONG).show();
-		}
+		//}else{
+			//	Toast.makeText(AlertZone.this," Your Alert Zone Preference \r\n is Not Available! Set it Up!",Toast.LENGTH_LONG).show();
+		//}
 	}
 	
 	
@@ -1824,19 +1848,26 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	
 	public void saveShapes() {
 		boolean startIs = true;
+		//first deleting all polygons from db
+		String URLMarker = "http://54.187.253.246/selectuser/delete_all_polygons_postgre.php/?userID="+userID;
+		String LinkMarker = URLMarker.replace(" ", "%20");
+		new shapeSend().execute(LinkMarker);
+		
+		
+		
 		if (counterPoly==0){
-			String URLMarker = "http://cs-server.usc.edu:1111/allMarkers.php/?start=" + startIs + "&user="+userName
+			URLMarker = "http://54.187.253.246/selectuser/save_polygons_postgre.php/?start=" + startIs + "&user="+userName
 					+ "&counterPoly=0"
 					+ "&Polytype=0"
 					+ "&polyCounts=0";
-			String LinkMarker = URLMarker.replace(" ", "%20");
+			LinkMarker = URLMarker.replace(" ", "%20");
 			new shapeSend().execute(LinkMarker);
 		}
 		
 		for (int i = 0; i < counterPoly; i++) {
 			Log.d("send1", "Hello");
 			
-			String URLMarker = "http://cs-server.usc.edu:1111/allMarkers.php/?start=" + startIs + "&user="+userName
+			URLMarker = "http://54.187.253.246/selectuser/save_polygons_postgre.php/?start=" + startIs + "&userID="+userID
 					+"&counterPoly="+ i
 					+"&Polytype=" + polyType.get(i);
 			
@@ -1850,7 +1881,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			}
 			
 			Log.d("send2", "Hello");
-		    String LinkMarker = URLMarker.replace(" ", "%20");
+		    LinkMarker = URLMarker.replace(" ", "%20");
 		    Log.d("send3", "Hello");
 		    Log.d("URLMarker", URLMarker);
 			
@@ -1864,9 +1895,9 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		
 		if (counterCirc==0){
 			endIs = true;
-			String URLMarker = "http://cs-server.usc.edu:1111/allMarkers.php/?start=" + startIs + "&end=" + endIs + "&user="+userName
+			URLMarker = "http://cs-server.usc.edu:1111/allMarkers.php/?start=" + startIs + "&end=" + endIs + "&user="+userName
 					+"&counterCirc=0&centerLat=0&centerLong=0&radius=0&circCounts=0";
-			String LinkMarker = URLMarker.replace(" ", "%20");
+			LinkMarker = URLMarker.replace(" ", "%20");
 			new shapeSend().execute(LinkMarker);
 		}
 		
@@ -1876,7 +1907,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			if (i == counterCirc-1)
 				endIs = true;
 			
-			String URLMarker = "http://cs-server.usc.edu:1111/allMarkers.php/?start="+startIs+"&end="+endIs+"&user="+userName
+			URLMarker = "http://cs-server.usc.edu:1111/allMarkers.php/?start="+startIs+"&end="+endIs+"&user="+userName
 					+"&counterCirc="+ i;
 			
 			URLMarker += "&centerLat=" + marker.get(i).getPosition().latitude;
@@ -1888,7 +1919,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			}
 		
 			Log.d("send2", "Hello");
-		    String LinkMarker = URLMarker.replace(" ", "%20");
+		    LinkMarker = URLMarker.replace(" ", "%20");
 			Log.d("Link", LinkMarker);
 			
 			new shapeSend().execute(LinkMarker);
