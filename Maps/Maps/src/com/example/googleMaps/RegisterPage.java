@@ -169,8 +169,20 @@ public class RegisterPage extends Activity {
 	            */
 	 
 	            /** Showing a message, on completion of download process */
-	            Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
-	            closethis();
+	        	if (result.contains("Denied"))
+	        	{
+	        		Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+	        		EditText e=(EditText) findViewById(R.id.regusername);
+                    e.setText("");
+                    e=(EditText) findViewById(R.id.regpassword);
+                    e.setText("");
+	        	}
+	        	else
+	        	{
+	        		Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+		            closethis();
+	        	}
+	            
 	        }
 	    }
 	   
