@@ -194,10 +194,10 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		Log.d("Http", "1");
 
 		Intent intent = getIntent();
-		userName = intent.getStringExtra(Login.EXTRA_MESSAGE);
-		userID = intent.getStringExtra(Login.USER_ID);
-		String n=userID.substring(0, userID.length()-7);
-		userID=n;
+		userName = intent.getStringExtra(PalMenu.EXTRA_MESSAGE);
+		userID = intent.getStringExtra(PalMenu.USER_ID);
+		
+		
 			
 		
 		
@@ -2029,11 +2029,13 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	}
     
     public void onBackPressed() {
+    	if(myTask!=null)
+			myTask.cancel(true);
     	Intent intent = new Intent(AlertZone.this,PalMenu.class);
     	intent.putExtra(EXTRA_MESSAGE, userName);
     	intent.putExtra(USER_ID, userID);
 		startActivity(intent);
-		myTask.cancel(true);
+		
 		finish();
 		//moveTaskToBack(true);
     }

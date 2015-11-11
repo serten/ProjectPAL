@@ -22,6 +22,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.LightingColorFilter;
 import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
@@ -80,7 +81,8 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 	
 	private GoogleMap map;
 	private GoogleMap map2;
-	
+	private Boolean pathStarted=false;
+	private Boolean followingStarted=false;
 
     protected GoogleApiClient mGoogleApiClient;
 
@@ -105,11 +107,7 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
     protected final static String REQUESTING_LOCATION_UPDATES_KEY = "requesting-location-updates-key";
     protected final static String LOCATION_KEY = "location-key";
     protected final static String LAST_UPDATED_TIME_STRING_KEY = "last-updated-time-string-key";
-    EditText eT2;
-	EditText eT3;
-	private LocationManager locationManager;
-	List<List<Marker>> markers = new ArrayList<List<Marker>>(); 
-	ArrayList<Marker> marker = new ArrayList<Marker>();
+    private LocationManager locationManager;
 	private int poly_num = 3;
 	private int poly_tracker = 3;
 	private boolean cirCon = false;
@@ -125,11 +123,11 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 	private int circRad = 10000;
 	private boolean circleDrag = false;
 	ArrayList<Polygon> polyShape = new ArrayList<Polygon>();
-	ArrayList<Circle> circShape = new ArrayList<Circle>();
+	
 	ArrayList<Integer> polyType = new ArrayList<Integer>();
-	ArrayList<Integer> circType = new ArrayList<Integer>();
+	
 	ArrayList<Polygon> polyShapeMap1 = new ArrayList<Polygon>();
-	ArrayList<Circle> circShapeMap1 = new ArrayList<Circle>();
+	
 	int counterPoly = 0;
 	int counterCirc = 0;
 	int markClick = 0;
@@ -152,9 +150,9 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 		Log.d("Http", "1");
 
 		Intent intent = getIntent();
-		userName = intent.getStringExtra(Login.EXTRA_MESSAGE);
-		userID = intent.getStringExtra(Login.USER_ID);
-		
+		userName = intent.getStringExtra(PalMenu.EXTRA_MESSAGE);
+		userID = intent.getStringExtra(PalMenu.USER_ID);
+				
 		Log.d("Http", "1.5");
 
 		Log.d("Http", "2");
@@ -165,30 +163,19 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 		map  = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
 		mpFrag.getMapAsync(this);
 		
-		MapFragment mpFrag2 = (MapFragment) getFragmentManager().findFragmentById(R.id.map2);
-		map2  = ((MapFragment) getFragmentManager().findFragmentById(R.id.map2)).getMap();
-		mpFrag2.getMapAsync(this);
-		
-
 		map.setMyLocationEnabled(true);
 		map.getUiSettings().setZoomControlsEnabled(true);
-		map2.getUiSettings().setZoomControlsEnabled(true);
-		eT2 = (EditText) findViewById(R.id.editText2);
-		eT3 = (EditText) findViewById(R.id.editText3);
 		
-		final TabHost tabHost = (TabHost) findViewById(R.id.tabhost);
-		tabHost.setup();
+		//eT2 = (EditText) findViewById(R.id.editText2);
+		//eT3 = (EditText) findViewById(R.id.editText3);
+		
+		
 
-		TabSpec spec1 = tabHost.newTabSpec("tab1");
-		spec1.setContent(R.id.tab1);
-		spec1.setIndicator("The Zones", null);
-		tabHost.addTab(spec1);
-
-		TabSpec spec2 = tabHost.newTabSpec("tab2");
-		spec2.setContent(R.id.tab2);
+		/*TabSpec spec2 = tabHost.newTabSpec("tab1");
+		spec2.setContent(R.id.tab1);
 		spec2.setIndicator("Edit the Zones", null);
 		tabHost.addTab(spec2);
-		
+		*/
 		mRequestingLocationUpdates = false;
         mLastUpdateTime = "";
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -202,106 +189,6 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 	}
 
 	
-	protected void setMarker(double latitude, double longitude) {
-		// TODO Auto-generated method stub
-		Log.d("error1 ","set");
-		Geocoder gc = new Geocoder(FollowMe.this);
-		List<Address> list = null;
-		try {
-			list = gc.getFromLocation(latitude, longitude, 1);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	
-		Address add = list.get(0);
-		locality = add.getLocality();
-		
-		if (counterPoly==0 && markers.size()== 0){
-			markers = new ArrayList<List<Marker>>(); 
-			//marker = new ArrayList<Marker>();
-			polyShape = new ArrayList<Polygon>();
-			polyType = new ArrayList<Integer>();
-		}
-		
-		if (counterCirc==0 && marker.size()== 0){
-			//markers = new ArrayList<List<Marker>>(); 
-			marker = new ArrayList<Marker>();
-			circShape = new ArrayList<Circle>();
-			//polyType = new ArrayList<Integer>();
-		}
-		MarkerOptions options = new MarkerOptions()
-		.title(locality)
-		.anchor(0.5f, 0.5f)
-		.position(new LatLng(latitude, longitude))
-		.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_mapmarker)).draggable(true);
-				//defaultMarker(BitmapDescriptorFactory.HUE_BLUE)).draggable(true);
-		Log.d("error2 ","set");
-		if (!cirCon){
-			
-				Log.d("error3 ","set");
-				
-				Log.d("error3Mark ",String.valueOf(counterPoly));
-				
-				if (markers.size()!=0 && counterPoly!=0 && markers.get(counterPoly-1).size() == poly_tracker){
-					removeEverything();
-				}
-				
-				Log.d("error4 ","set");
-				if (marker.size()!=0 && counterCirc!=0 && marker.get(counterCirc-1)!= null){
-					removeEverything();
-				}
-				poly_tracker = poly_num;
-				
-				Log.d("error5 ","set");
-				markers.add(new ArrayList<Marker>());
-				Log.d("error5.1 ","set");
-				Log.d("counterPoly: ",String.valueOf(counterPoly));
-				Log.d("markers.size(): ",String.valueOf(markers.size()));
-				if (markers.get(counterPoly).size()==0){
-					Log.d("error5.2 ","set");
-					options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)).anchor(0.5f, 1f);
-					Log.d("error5.3 ","set");
-					}
-				markers.get(counterPoly).add(map2.addMarker(options));
-				Log.d("error5.2 ","set");
-				//Log.d("error5Mark ",String.valueOf(marker.get(0).size()));
-				if (markers.size()!=0 && markers.get(counterPoly).size() == poly_num){
-					Log.d("error5.3 ","set");
-					ArrayList<Marker> markersComplete = new ArrayList<Marker>(); 
-					
-					options = new MarkerOptions()
-					.title(locality)
-					.anchor(0.5f, 0.5f)
-					.position(markers.get(counterPoly).get(0).getPosition())
-					.icon(BitmapDescriptorFactory.fromResource(R.drawable.but_close)).draggable(true);
-					markers.get(counterPoly).get(0).remove();
-					markers.get(counterPoly).set(0,map2.addMarker(options));
-					//drawPolygon();
-				}
-				Log.d("error6 ","set");
-			
-			
-		} else{
-			
-			circCenter = new LatLng(latitude, longitude);
-			
-			if (markers.size() != 0){
-				removeEverything();
-			}
-			
-			if (marker.size()!=0 && counterCirc!=0 && marker.get(counterCirc-1)!= null){
-				removeEverything();
-			}
-			//circ_tracker = cirCon;
-			options.icon(BitmapDescriptorFactory.fromResource(R.drawable.but_close)).anchor(0.5f, 0.5f).title(locality);
-			marker.add(map2.addMarker(options));
-			//drawCircle(marker.get(counterCirc).getPosition());
-		}
-	}
-
-	
-	
 	private void drawPolygon(){
 		
 		PolygonOptions options = null;
@@ -311,9 +198,6 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 			.strokeWidth(3)
 			.strokeColor(Color.BLUE);
 			Log.d("error1polyType-size ",String.valueOf(polyType.size()));
-			for (int i = 0; i < poly_num; i++) {
-				options.add(markers.get(counterPoly).get(i).getPosition());
-			}
 			Log.d("error1counterPoly ",String.valueOf(counterPoly));
 			polyShape.add(map2.addPolygon(options));
 			Log.d("error1counterPoly ","ok1");
@@ -332,14 +216,6 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 					.strokeWidth(3)
 					.strokeColor(Color.BLUE);
 					Log.d("errDrag","ok3");
-					for (int i = 0; i < polyType.get(j); i++) {
-						Log.d("errDrag","ok4");
-						Log.d("j = ",String.valueOf(j));
-						Log.d("i = ",String.valueOf(i));
-						Log.d("markers.get(j).size(): ",String.valueOf(markers.get(j).size()));
-						Log.d("markers.get(j).get(i): ",String.valueOf(markers.get(j).get(i)));
-						options.add(markers.get(j).get(i).getPosition());
-					}
 					Log.d("errDrag","ok5");
 					polyShape.add(map2.addPolygon(options));
 				}
@@ -347,33 +223,7 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 	}
 	
 
-	private void drawCircle(LatLng ll) {
-		// TODO Auto-generated method stub
-		CircleOptions options = null;
-		if (!onDrag){
-			circType.add(circRad);
-			options = new CircleOptions()
-			.center(ll)
-			.radius(circRad)
-			.fillColor(0x66ff0000)
-			.strokeColor(Color.CYAN)
-			.strokeWidth(3);
-			circShape.add(map2.addCircle(options));
-			counterCirc = counterCirc +1;
-		}else{
-				circShape = new ArrayList<Circle>();
-				for (int j = 0; j < counterCirc; j++) {
-					options = new CircleOptions()
-					.center(marker.get(j).getPosition())
-					.radius(circRad)
-					.fillColor(0x66ff0000)
-					.strokeWidth(3)
-					.strokeColor(Color.CYAN);
-					circShape.add(map2.addCircle(options));
-				}
-		}	
-		onDrag = false;
-	}
+	
 	
 	
 	private void removeEverything(){
@@ -391,11 +241,6 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 					Log.d("error3CP ",String.valueOf(counterPoly));
 					for (int i = counterPoly; i>0 ; i--) {
 						Log.d("error3i ",String.valueOf(i));
-						for (Marker marker : markers.get(i-1)) {
-							Log.d("error3 ","rmveth-1");
-							marker.remove();
-						}
-						markers.get(i-1).clear();
 						polyShape.get(i-1).remove();
 					}
 					Log.d("error4 ","rmveth");
@@ -403,18 +248,6 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 					
 				}
 				Log.d("error5 ","rmveth");
-				if (circShape.size()!=0 && circShape.get(0) != null) {
-					Log.d("error6 ","rmveth");
-					
-					for (int i = counterCirc; i >0 ; i--) {
-						marker.get(i-1).remove();
-						circShape.get(i-1).remove();
-					}
-					//marker = new ArrayList<Marker>();
-					circShape = new ArrayList<Circle>();
-					Log.d("error7 ","rmveth");
-				}
-				counterCirc = 0;
 				counterPoly = 0;
 			}else{
 				if (polyShape.size()!=0){
@@ -429,17 +262,6 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 					Log.d("error4-onDrag ","rmveth");
 				}
 				Log.d("error4-1-onDrag ","rmveth");
-				Log.d("error4-2-onDrag ",String.valueOf(circShape.size()));
-				if (circShape.size()!=0) {
-					Log.d("error5--onDrag","rmveth");
-					
-					for (int i = 0; i <counterCirc ; i++) {
-						circShape.get(i).remove();
-						circShape.set(i,null);
-					}
-					circShape = new ArrayList<Circle>();
-					Log.d("error6-onDrag","rmveth");
-				}
 				Log.d("onDrag-end","rmveth");
 			}
 		}else{
@@ -457,17 +279,6 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 					Log.d("error4-onDrag ","rmveth");
 				}
 				Log.d("error4-1-onDrag ","rmveth");
-				Log.d("error4-2-onDrag ",String.valueOf(circShape.size()));
-				if (circShape.size()!=0) {
-					Log.d("error5--onDrag","rmveth");
-					
-					for (int i = 0; i <counterCirc ; i++) {
-						circShape.get(i).remove();
-						circShape.set(i,null);
-					}
-					circShape = new ArrayList<Circle>();
-					Log.d("error6-onDrag","rmveth");
-				}
 				Log.d("onDrag-end","rmveth");
 			}else{
 				//do nothing
@@ -475,25 +286,6 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 		}
 	}
 	
-	
-	
-	public void holdChange(View v) {
-		Log.d("hold","is changing");
-		Button but = (Button) findViewById(R.id.hold);
-		if(but.getText() =="Hold is On"){
-			Log.d("hold","is off");
-			but.setText("Hold is Off");
-			but.setBackgroundColor(Color.GRAY);
-			holdChange = false;
-		}else{
-			Log.d("hold","is On");
-			but.setText("Hold is On");
-			but.setBackgroundColor(Color.GREEN);
-				
-			holdChange = true;
-		}
-	}
-
 
     protected synchronized void buildGoogleApiClient() {
         Log.i(TAG, "Building GoogleApiClient");
@@ -508,7 +300,6 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
     protected void createLocationRequest() {
         mLocationRequest = new LocationRequest();
 
-
         mLocationRequest.setInterval(UPDATE_INTERVAL_IN_MILLISECONDS);
 
         mLocationRequest.setFastestInterval(FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS);
@@ -519,24 +310,50 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
     
 	
 	
-	public void onClick_Sat(View v) {
-//		CameraUpdate update = CameraUpdateFactory.newLatLng(LOCATION_BURNABY);
-		map.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
-		CameraUpdate update = CameraUpdateFactory.newLatLngZoom(LOCATION_LA, 9);
-		map.animateCamera(update);
-	}
-	public void onClick_Norm(View v) {
-		map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-		CameraUpdate update = CameraUpdateFactory.newLatLngZoom(LOCATION_LA, 9);
-		map.animateCamera(update);
+	public void onClick_FollowFriends(View v) {
+		Button followFriends = (Button) findViewById(R.id.btnFollowFriends);
+		if(followingStarted)
+		{
+			followingStarted=false;
+			
+			followFriends.setText("Follow Friends");
+			
+			followFriends.getBackground().setColorFilter(new LightingColorFilter(0xffcccccc, 0xff000000));
+		}
+		else
+		{
+			followingStarted=true;
+			
+			followFriends.setText("End Following");
+
+			followFriends.getBackground().setColorFilter(new LightingColorFilter(0xff000000, 0xFFAA0000));
+		}
 		
 	}
-	public void onClick_Ter(View v) {
-		map.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
-		CameraUpdate update = CameraUpdateFactory.newLatLngZoom(LOCATION_LA, 9);
-		map.animateCamera(update);
+	public void onClick_StartPath(View v) {
+		
+		Button startPath = (Button) findViewById(R.id.btnStartPath);
+		if(pathStarted)
+		{
+			pathStarted=false;			
+			startPath.setText("Start Path");
+			startPath.getBackground().setColorFilter(new LightingColorFilter(0xffcccccc, 0xff000000));
+			Toast.makeText(this, "PATH SAVING ENDED...", Toast.LENGTH_LONG).show();
+		}
+		else
+		{
+			pathStarted=true;
+			startPath.setText("End Path");
+			//startPath.setBackgroundColor(Color.RED);
+			int color = Color.parseColor("#AE6118"); //The color u want           
+			
+			v.getBackground().setColorFilter(new LightingColorFilter(0xff000000, 0xFFAA0000));
+			Toast.makeText(this, "PATH SAVING STARTED...", Toast.LENGTH_LONG).show();
+		}
+
 		
 	}
+
 
 	@Override
 	public void onMapReady(GoogleMap googleMap) {
@@ -549,50 +366,18 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 	
 	private void gotoLocation(double lat, double lng,
 			float zoom) {
-		eT2.setText(String.format("%.6f",lat));
-    	eT3.setText(String.format("%.6f",lng));
+		//eT2.setText(String.format("%.6f",lat));
+    	//eT3.setText(String.format("%.6f",lng));
 		if (startView){
 			LatLng ll = new LatLng(lat, lng);
 			CameraUpdate update = CameraUpdateFactory.newLatLngZoom(ll, zoom);
-			map2.animateCamera(update);
+			map.animateCamera(update);
 			map.moveCamera(update);
 			startView = false;
 		}
 	}
 	
-	public void geoLocate(View v) throws IOException {
-		hideSoftKeyboard(v);
 		
-		EditText et = (EditText) findViewById(R.id.editText1);
-		String location = et.getText().toString();
-		
-		Geocoder gc = new Geocoder(this);
-		List<Address> list = gc.getFromLocationName(location, 1);
-		if (!list.isEmpty()){
-			et.setText("");
-			Toast.makeText(this, "Processing ...",Toast.LENGTH_SHORT).show();
-			Address add = list.get(0);
-			
-			String locality = add.getLocality();
-			double lat = add.getLatitude();
-			double lng = add.getLongitude();
-			startView = true;
-			gotoLocation(lat,lng,8);
-			
-		}else{
-			et.setText("");
-			Toast.makeText(this, "Please Enter a Valid Location to Look Up For You!",Toast.LENGTH_SHORT).show();
-		}
-	}
-	
-	
-	
-	private void hideSoftKeyboard(View v) {
-		InputMethodManager imm = (InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
-		imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
-	}
-
-	
     private void updateValuesFromBundle(Bundle savedInstanceState) {
         Log.i(TAG, "Updating values from bundle");
         if (savedInstanceState != null) {
@@ -624,24 +409,27 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
         	LatLng myPos = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
         	double i = (double) mCurrentLocation.getLatitude();
         	double j = (double) mCurrentLocation.getLongitude();
-        	String forToast = "You are at: " + i + " , " +j;
-        	//Toast.makeText(this, forToast, Toast.LENGTH_LONG).show();
-        	String URL = "http://cs-server.usc.edu:1111/maps.php/?lat="
-					+ i
-					+ "&long="
-					+ j
-					+ "&user="
-					+ userName; 
-			final String Link = URL.replace(" ", "%20");
-			Log.d("Link", Link);
-			myTask = new LongLatInfo();
-			if (!myTask.isCancelled())
-				myTask.execute(Link);
+        	if(pathStarted)
+        	{
+	        	String forToast = "You are at: " + i + " , " +j;
+	        	Toast.makeText(this, forToast, Toast.LENGTH_LONG).show();
+	        	String URL = "http://54.187.253.246/selectuser/savePath_postgre.php?lat="
+						+ i
+						+ "&long="
+						+ j
+						+ "&userID="
+						+ userID; 
+				final String Link = URL.replace(" ", "%20");
+				Log.d("Link", Link);
+				myTask = new LongLatInfo();
+				if (!myTask.isCancelled())
+					myTask.execute(Link);
+        	}
 			
-        	eT2.setText(String.format("%.6f",i));
-        	eT3.setText(String.format("%.6f",j));
+        	//eT2.setText(String.format("%.6f",i));
+        	//eT3.setText(String.format("%.6f",j));
         	
-        	map2.addMarker(new MarkerOptions().position(myPos).title("We Are Here! Suleyman-Keyvan-Ali"));
+        	//map2.addMarker(new MarkerOptions().position(myPos).title("We Are Here! Suleyman-Keyvan-Ali"));
         }
     }
     
@@ -677,41 +465,6 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 		}
     }
     
-   /* private class shapeSend extends AsyncTask<String, Integer, String>{ // X,Y,Z
-    	protected String doInBackground(String... params) { // Z,X
-    		 
-    		try {
-    			Log.d("shapeSend", "1");
-    			if (!isCancelled()){
-					Log.d("params[0]", params[0]);
-					Log.d("shapeSend", "2");
-					HttpClient client = new DefaultHttpClient();
-					StringBuilder url = new StringBuilder(params[0]);
-					if (!isCancelled()){
-						HttpGet get = new HttpGet(url.toString());
-						Log.d("shapeSend", "3");
-						client.execute(get);
-					}
-    			}
-    			
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			}
-			Log.d("shapeSend", "4");
-			return null;
-		}
-
-		protected void onPostExecute(String result) { // Z
-			
-		}
-		
-		
-		protected void onCancelled (String result){
-			super.onCancelled(result);
-		}
-    }
-    */
-
     private class polyShapeGet extends AsyncTask<String, Integer, ArrayList<PolygonOptions>>{ // X,Y,Z
     	
     	protected ArrayList<PolygonOptions> doInBackground(String... params) { // Z,X
@@ -792,7 +545,7 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 		protected void onPostExecute(ArrayList<PolygonOptions> result) { // Z
 			if (result!=null){
 				for (int i = 0; i < result.size(); i++) {
-					markers.add(new ArrayList<Marker>());
+
 					for (int j = 0; j < result.get(i).getPoints().size(); j++) {
 						Geocoder gc = new Geocoder(FollowMe.this);
 						List<Address> list = null;
@@ -806,17 +559,9 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 						Address add = list.get(0);
 						locality = add.getLocality();
 						
-						MarkerOptions options = new MarkerOptions()
-						.title(locality)
-						.anchor(0.5f, 0.5f)
-						.position(new LatLng(result.get(i).getPoints().get(j).latitude, result.get(i).getPoints().get(j).longitude))
-						.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_mapmarker)).anchor(0.5f, 0.5f).title(locality).draggable(true);
-						if (j==0){
-							options.icon(BitmapDescriptorFactory.fromResource(R.drawable.but_close));
-						}
-						markers.get(i).add(map2.addMarker(options));
+						//markers.get(i).add(map2.addMarker(options));
 					}
-					polyShape.add(map2.addPolygon(result.get(i)));
+					//polyShape.add(map2.addPolygon(result.get(i)));
 					polyShapeMap1.add(map.addPolygon(result.get(i)));
 				}
 			}
@@ -828,127 +573,7 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 		}
     }
     
-    
-    private class circShapeGet extends AsyncTask<String, Integer, ArrayList<CircleOptions>>{ // X,Y,Z
-    	
-    	protected ArrayList<CircleOptions> doInBackground(String... params) { // Z,X
-    		
-    		ArrayList<CircleOptions> options = new ArrayList<CircleOptions>();
-    		try {
-				StringBuilder url = new StringBuilder("http://cs-server.usc.edu:1111/"+userName+"-allMarkers.txt");
-				HttpGet get = new HttpGet(url.toString());
-				HttpClient client = new DefaultHttpClient();
-				HttpResponse r = client.execute(get);
-				int status = r.getStatusLine().getStatusCode();
-				String data = null;
-				JSONObject explrObject = null;
-				
-				Log.d("Error", "test0");
-				if (status == 200) {
-					HttpEntity e = r.getEntity();
-					Log.d("circShapeGet-0", "hi");
-					data = EntityUtils.toString(e);
-					Log.d("circShapeGet-0", "hi-1");
-					explrObject = new JSONObject(data);
-					Log.d("circShapeGet-1", explrObject.toString());
-					JSONObject circles = new JSONObject(
-							explrObject.getString("circles"));
-					counterCirc = Integer.valueOf(circles.getString("circCounts"));
-					
-					Log.d("circShapeGet-2", String.valueOf(counterCirc));
-					//Log.d("error1polyType-size ",String.valueOf(polyType.size()));
-					
-					
-					//circShape.add(map2.addCircle(options));
-					//counterCirc = counterCirc +1;
-					
-					
-					for (int i = 0; i < counterCirc; i++) {
-						
-						Log.d("circShapeGet-2", "i="+String.valueOf(i)+" "+String.valueOf(counterCirc));
-						Log.d("circShapeGet-3.1", String.valueOf(counterCirc));
-						JSONObject circ = new JSONObject(
-								circles.getString("circ"+i));
-						
-						Log.d("circShapeGet-3.2", String.valueOf(counterCirc));
-						circType.add(Integer.valueOf(circ.getString("radius")));
-						Log.d("circShapeGet-3.3", String.valueOf(counterCirc));
-						//options.get(i).add(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))));
-						options.add(new CircleOptions()
-						.center(new LatLng(Double.valueOf(circ.getString("centerLat")),Double.valueOf(circ.getString("centerLong"))))
-						.radius(Integer.valueOf(circ.getString("radius")))
-						.fillColor(0x66ff0000)
-						.strokeColor(Color.CYAN)
-						.strokeWidth(3));
-						Log.d("centerLat-3.35",String.valueOf(Double.valueOf(circ.getString("centerLat"))));
-						Log.d("centerLong-3.36",String.valueOf(Double.valueOf(circ.getString("centerLong"))));
-						Log.d("radius-3.37",String.valueOf(Double.valueOf(circ.getString("radius"))));
-						Log.d("circShapeGet-3.4", String.valueOf(counterCirc));
-					}
-					Log.d("error1counterPoly ",String.valueOf(counterCirc));
-					Log.d("optins ", options.toString());
-					Log.d("optins ", String.valueOf(options.size()));
-					return options;
-					
-				} else {
-					Toast.makeText(FollowMe.this, "error",
-							Toast.LENGTH_SHORT);
-				}
-
-			} catch (ClientProtocolException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (JSONException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-				System.out.println(e1);
-			}
-			return null;
-		}
-
-		protected void onPostExecute(ArrayList<CircleOptions> result) { // Z
-			//Log.d("Onpostexecute-1",circShape.toString());
-			//Log.d("Onpostexecute-1",result.toString());
-			if (result!=null){
-				for (int i = 0; i < result.size(); i++) {
-					
-					Geocoder gc = new Geocoder(FollowMe.this);
-					List<Address> list = null;
-					try {
-						list = gc.getFromLocation(result.get(i).getCenter().latitude, result.get(i).getCenter().longitude, 1);
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				
-					Address add = list.get(0);
-					locality = add.getLocality();
-					
-					MarkerOptions options = new MarkerOptions()
-					.title(locality)
-					.anchor(0.5f, 0.5f)
-					.position(new LatLng(result.get(i).getCenter().latitude, result.get(i).getCenter().longitude))
-					.icon(BitmapDescriptorFactory.fromResource(R.drawable.but_close)).anchor(0.5f, 0.5f).title(locality).draggable(true);
-					marker.add(map2.addMarker(options));
-					
-					Log.d("2-Onpostexecute-i=",String.valueOf(i));
-					circShape.add(map2.addCircle(result.get(i)));
-					circShapeMap1.add(map.addCircle(result.get(i)));
-				}	
-			}
-			Log.d("Onpostexecute-3","End");
-		}
-		
-		
-		protected void onCancelled (ArrayList<CircleOptions> result){
-			super.onCancelled(result);
-		}
-    }
-    
-
+ 
     protected void stopLocationUpdates() {
     }
     
@@ -987,7 +612,7 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
         }
         
         if (locationManager != null){
-        	locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 7000, 0, this);
+        	locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 0, this);
         }
         	
         if (mRequestingLocationUpdates) {
@@ -998,30 +623,6 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
     }
     
  
-    
-    public void onClickHandler(View v) {
-		switch (v.getId()) {
-		case R.id.myPic:
-			Intent in = new Intent(Intent.ACTION_VIEW,
-					Uri.parse("https://www.facebook.com/keyvan.noury?fref=ts")); 
-			startActivity(in); 
-			break;
-		case R.id.myPic2:
-			Intent in1 = new Intent(Intent.ACTION_VIEW,
-					Uri.parse("https://www.facebook.com/profile.php?id=705320455"));
-			startActivity(in1); 
-			break;
-		case R.id.myPic3:
-			Intent in2 = new Intent(Intent.ACTION_VIEW,
-					Uri.parse("https://www.facebook.com/ali.ghahramani")); 
-
-			startActivity(in2);
-			break;
-		// put your onclick code here
-		}
-	}
-    
-    
     @Override
     protected void onStop() {
         mGoogleApiClient.disconnect();
@@ -1101,29 +702,9 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.follow_me_menu, menu);
+		//getMenuInflater().inflate(R.menu.follow_me_menu, menu);
 		return true;
 	}
-	
-	/*public void getEverything(){
-		eraseMap1();
-		holdChange = false;
-		removeEverything();
-		Button but = (Button) findViewById(R.id.hold);
-		but.setText("Hold is On");
-		but.setBackgroundColor(Color.GREEN);
-		holdChange = true;
-		
-		markers = new ArrayList<List<Marker>>(); 
-		polyShape = new ArrayList<Polygon>();
-		polyType = new ArrayList<Integer>();
-	 
-		marker = new ArrayList<Marker>();
-		circShape = new ArrayList<Circle>();
-		new polyShapeGet().execute();
-		new circShapeGet().execute();
-
-	}*/
 	
 	
 	public void eraseMap1(){
@@ -1134,89 +715,10 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 			}
 			polyShapeMap1 = new ArrayList<Polygon>();
 		}
-		if (circShapeMap1.size()!=0 && circShapeMap1.get(0) != null) {
-			int sizeCircShapeOnMap1 = circShapeMap1.size();
-			for (int i = sizeCircShapeOnMap1; i >0 ; i--) {
-				circShapeMap1.get(i-1).remove();
-			}
-			circShapeMap1 = new ArrayList<Circle>();
-		}
+		
 	}
 	
-	/*public void saveShapes() {
-		boolean startIs = true;
-		if (counterPoly==0){
-			String URLMarker = "http://cs-server.usc.edu:1111/allMarkers.php/?start=" + startIs + "&user="+userName
-					+ "&counterPoly=0"
-					+ "&Polytype=0"
-					+ "&polyCounts=0";
-			String LinkMarker = URLMarker.replace(" ", "%20");
-			new shapeSend().execute(LinkMarker);
-		}
-		
-		for (int i = 0; i < counterPoly; i++) {
-			Log.d("send1", "Hello");
-			
-			String URLMarker = "http://cs-server.usc.edu:1111/allMarkers.php/?start=" + startIs + "&user="+userName
-					+"&counterPoly="+ i
-					+"&Polytype=" + polyType.get(i);
-			
-			if (startIs){
-				URLMarker += "&polyCounts="+counterPoly;
-				startIs = false;
-			}
-			for (int j = 0; j < polyType.get(i); j++) {
-				URLMarker += "&point"+j+"lat="+markers.get(i).get(j).getPosition().latitude;
-				URLMarker += "&point"+j+"long="+markers.get(i).get(j).getPosition().longitude;
-			}
-			
-			Log.d("send2", "Hello");
-		    String LinkMarker = URLMarker.replace(" ", "%20");
-		    Log.d("send3", "Hello");
-		    Log.d("URLMarker", URLMarker);
-			
-			new shapeSend().execute(LinkMarker);
-			//new shapeSend().execute(LinkPolyShapes);
-		}
-		
-		startIs = true;
-		boolean endIs = false;
-		
-		
-		if (counterCirc==0){
-			endIs = true;
-			String URLMarker = "http://cs-server.usc.edu:1111/allMarkers.php/?start=" + startIs + "&end=" + endIs + "&user="+userName
-					+"&counterCirc=0&centerLat=0&centerLong=0&radius=0&circCounts=0";
-			String LinkMarker = URLMarker.replace(" ", "%20");
-			new shapeSend().execute(LinkMarker);
-		}
-		
-		for (int i = 0; i < counterCirc; i++) {
-			Log.d("send1", "Hello");
-			
-			if (i == counterCirc-1)
-				endIs = true;
-			
-			String URLMarker = "http://cs-server.usc.edu:1111/allMarkers.php/?start="+startIs+"&end="+endIs+"&user="+userName
-					+"&counterCirc="+ i;
-			
-			URLMarker += "&centerLat=" + marker.get(i).getPosition().latitude;
-			URLMarker += "&centerLong=" + marker.get(i).getPosition().longitude + "&radius="+circType.get(i);
-	
-			if (startIs){
-				URLMarker += "&circCounts="+counterCirc;
-				startIs = false;
-			}
-		
-			Log.d("send2", "Hello");
-		    String LinkMarker = URLMarker.replace(" ", "%20");
-			Log.d("Link", LinkMarker);
-			
-			new shapeSend().execute(LinkMarker);
-		}
-	}
-	*/
-	
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// TODO Auto-generated method stub
@@ -1248,11 +750,13 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 	}
     
     public void onBackPressed() {
+    	if(myTask!=null)
+			myTask.cancel(true);
     	Intent intent = new Intent(FollowMe.this,PalMenu.class);
     	intent.putExtra(EXTRA_MESSAGE, userName);
     	intent.putExtra(USER_ID, userID);
 		startActivity(intent);
-		myTask.cancel(true);
+		
 		finish();
 		//moveTaskToBack(true);
     }

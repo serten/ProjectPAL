@@ -1,173 +1,50 @@
-<TabHost xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/tabhost"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
-    
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
     
 
-    <LinearLayout
+
+
+    <GridLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical" >
+        android:layout_height="wrap_content"
+        android:columnCount="2" >
 
-        <TabWidget
-            android:id="@android:id/tabs"
-            android:layout_width="match_parent"
+        <Button
+            android:id="@+id/btnFollowFriends"
+            android:layout_width="160dp"
             android:layout_height="wrap_content"
-            android:background="#99CC00" >
-        </TabWidget>
+            android:layout_column="0"
+            android:layout_gravity="left|top"
+            android:layout_row="0"
+            android:onClick="onClick_FollowFriends"
+            android:text="Follow Friends" 
+            android:colorBackground="#808080"/>
 
-        <FrameLayout
-            android:id="@android:id/tabcontent"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" >
+        <Button
+            android:id="@+id/btnStartPath"
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:layout_column="1"
+            android:layout_gravity="right|top"
+            android:layout_row="0"
+            android:onClick="onClick_StartPath"
+            android:text="Start Path"
+            android:colorBackground="#808080" />
 
-            <RelativeLayout
-                android:id="@+id/tab2"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_gravity="top"
-                android:background="#7777FF"
-                android:orientation="vertical"
-                android:weightSum="100" >
-
-                <LinearLayout
-                    android:id="@+id/linearLayout1"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal" >
-
-                    <TextView
-                        android:id="@+id/textView1"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Location:"
-                        android:textSize="20sp" />
-
-                    <EditText
-                        android:id="@+id/editText1"
-                        android:layout_width="96dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:ems="10" />
-
-                    <Button
-                        android:id="@+id/button1"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:onClick="geoLocate"
-                        android:text="Go"
-                        android:textSize="12dp" />
-
-                    <Button
-                        android:id="@+id/hold"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:onClick="holdChange"
-                        android:text="Hold is Off"
-                        android:background="#808080"
-                        android:textSize="9dp" />
-                </LinearLayout>
-
-                <fragment
-                    android:id="@+id/map2"
-                    android:name="com.google.android.gms.maps.MapFragment"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentBottom="true"
-                    android:layout_alignParentLeft="true"
-                    android:layout_alignParentRight="true"
-                    android:layout_below="@+id/linearLayout1"
-                    android:clickable="true"
-                    android:enabled="true" />
-
-                <TextView
-                    android:id="@+id/textView9"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentLeft="true"
-                    android:layout_below="@+id/textView8"
-                    android:text="Long:" />
-
-                <EditText
-                    android:id="@+id/editText2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignBaseline="@+id/textView8"
-                    android:layout_alignBottom="@+id/textView8"
-                    android:layout_toRightOf="@+id/textView9"
-                    android:textSize="13dp"
-                    android:ems="7" />
-
-                <TextView
-                    android:id="@+id/textView8"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignTop="@+id/map2"
-                    android:layout_toLeftOf="@+id/editText2"
-                    android:text="Lat:" />
-
-                <EditText
-                    android:id="@+id/editText3"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/textView8"
-                    android:layout_toRightOf="@+id/textView9"
-                    android:textSize="13dp"
-                    android:ems="7" />
-
-            </RelativeLayout>
-            
-           
-            
-
-            <RelativeLayout
-                android:id="@+id/tab1"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_gravity="top"
-                android:background="#7777FF"
-                android:orientation="vertical"
-                android:weightSum="100" >
-
-                <Button
-                    android:id="@+id/btnSurrey"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentRight="true"
-                    android:layout_alignParentTop="true"
-                    android:onClick="onClick_Sat"
-                    android:text="LA-sat" />
-
+    </GridLayout>
+		
                 <fragment
                     android:id="@+id/map"
                     android:name="com.google.android.gms.maps.MapFragment"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_below="@+id/btnSurrey"
                     android:clickable="true"
                     android:enabled="true" />
-
-                <Button
-                    android:id="@+id/btnLA"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentTop="true"
-                    android:layout_centerHorizontal="true"
-                    android:onClick="onClick_Norm"
-                    android:text="LA-norm" />
-
-                <Button
-                    android:id="@+id/btnCity"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentLeft="true"
-                    android:layout_alignParentTop="true"
-                    android:onClick="onClick_Ter"
-                    android:text="LA-ter" />
-            </RelativeLayout>
-        </FrameLayout>
+          
+        
     </LinearLayout>
-
-</TabHost>

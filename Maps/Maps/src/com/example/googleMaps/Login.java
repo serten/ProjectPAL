@@ -269,6 +269,9 @@ public class Login extends Activity{
             	Toast.makeText(getBaseContext(), "Welcome back!"+result.toString(), Toast.LENGTH_SHORT).show();
 				Intent results = new Intent(Login.this, PalMenu.class);
 				USERPKID=result.toString();
+				int d=USERPKID.length();
+	    		String n=USERPKID.substring(0, d-7);
+	    		USERPKID=n;
 				results.putExtra(USER_ID, USERPKID);
 				results.putExtra(EXTRA_MESSAGE, username);
 				startActivity(results);

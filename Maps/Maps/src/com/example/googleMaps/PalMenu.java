@@ -63,7 +63,7 @@ public class PalMenu extends Activity{
 	public final static String EXTRA_MESSAGE = "com.example.MESSAGE";
 	public final static String USER_ID = "com.example.USERID";
     protected final static String LOCATION_KEY = "location-key";
-
+    private NetworkTask networkTask;
 	
 	String userName,userID;
 
@@ -109,7 +109,7 @@ public class PalMenu extends Activity{
                 	results.putExtra(EXTRA_MESSAGE, userName);
                 	results.putExtra(USER_ID, userID);
     				startActivity(results);
-    				onPause();
+    				
                 }else{
                     Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
                 }
@@ -127,7 +127,7 @@ public class PalMenu extends Activity{
                 	results.putExtra(EXTRA_MESSAGE, userName);
                 	results.putExtra(USER_ID, userID);
     				startActivity(results);
-    				onPause();
+    				
                 }else{
                     Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
                 }
@@ -146,7 +146,7 @@ public class PalMenu extends Activity{
                 	results.putExtra(USER_ID, userID);
 
     				startActivity(results);
-    				onPause();
+    				
                 }else{
                     Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
                 }
@@ -164,7 +164,7 @@ public class PalMenu extends Activity{
                 	results.putExtra(EXTRA_MESSAGE, userName);
                 	results.putExtra(USER_ID, userID);
     				startActivity(results);
-    				onPause();
+    				
                 }else{
                     Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
                 }
@@ -182,7 +182,7 @@ public class PalMenu extends Activity{
       	      // Called when a new location is found by the network location provider.
       	    	LAT=""+loc.getLatitude();
       	    	LONG=""+loc.getLongitude();
-      	    	NetworkTask networkTask = new NetworkTask();
+      	    	networkTask = new NetworkTask();
                 
                 /** Starting the task created above */
                 String url="http://54.187.253.246/selectuser/updateCurrentCoordinate_postgre.php";
@@ -202,13 +202,13 @@ public class PalMenu extends Activity{
    
     public void startLocationSaving()
     {
-    	Toast.makeText(getBaseContext(), "LOCATION SERVICE STARTED", Toast.LENGTH_SHORT).show();
+    	//Toast.makeText(getBaseContext(), "LOCATION SERVICE STARTED", Toast.LENGTH_SHORT).show();
 		PalMenu.this.locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 7000, 0, PalMenu.this.locationListener);    	
     }
     
     public void endLocationSaving()
     {
-    	 Toast.makeText(getBaseContext(), "LOCATION SERVICE ENDED", Toast.LENGTH_SHORT).show();
+    	 //Toast.makeText(getBaseContext(), "LOCATION SERVICE ENDED", Toast.LENGTH_SHORT).show();
 		 PalMenu.this.locationManager.removeUpdates(PalMenu.this.locationListener);    	
     }
 
@@ -334,8 +334,11 @@ public class PalMenu extends Activity{
 	@Override
     protected void onPause() {
 		// TODO Auto-generated method stub
-		super.onPause();
 		endLocationSaving();
+		if(networkTask!=null)
+        	networkTask.cancel(true);
+		super.onPause();
+		
 		
 	}
     
@@ -348,8 +351,11 @@ public class PalMenu extends Activity{
 	
     
     public void onBackPressed() {
-        onPause();
+    	endLocationSaving();
+		if(networkTask!=null)
+        	networkTask.cancel(true);
         moveTaskToBack(true);
+
     }
     
 	@Override
@@ -361,6 +367,9 @@ public class PalMenu extends Activity{
 	
     @Override
     protected void onStop() {
+    	endLocationSaving();
+		if(networkTask!=null)
+        	networkTask.cancel(true);
         super.onStop();
     }
     
