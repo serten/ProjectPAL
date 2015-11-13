@@ -319,14 +319,42 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 			followFriends.setText("Follow Friends");
 			
 			followFriends.getBackground().setColorFilter(new LightingColorFilter(0xffcccccc, 0xff000000));
+			
+			TextView followedFriend = (TextView) findViewById(R.id.followedFriend);
+			
+			followedFriend.setText("");
+			
+			
 		}
 		else
 		{
-			followingStarted=true;
-			
-			followFriends.setText("End Following");
+						
+			final CharSequence[] items = {
+	                "Rajesh", "Mahesh", "Vijayakumar"
+	        };
 
-			followFriends.getBackground().setColorFilter(new LightingColorFilter(0xff000000, 0xFFAA0000));
+	        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+	        builder.setTitle("Make your selection");
+	        builder.setItems(items, new DialogInterface.OnClickListener() {
+	            public void onClick(DialogInterface dialog, int item) {
+	            	
+	            	Button followFriends = (Button) findViewById(R.id.btnFollowFriends);
+	            	
+	            	followingStarted=true;
+	    			
+	    			followFriends.setText("End Following");
+
+	    			followFriends.getBackground().setColorFilter(new LightingColorFilter(0xff000000, 0xFFAA0000));
+	    			
+	    			TextView followedFriend = (TextView) findViewById(R.id.followedFriend);
+	    			
+	    			followedFriend.setText(items[item]);
+	    			
+	    			followedFriend.bringToFront();
+	            }
+	        });
+	        AlertDialog alert = builder.create();
+	        alert.show();
 		}
 		
 	}
