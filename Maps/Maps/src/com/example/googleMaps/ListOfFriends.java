@@ -11,6 +11,7 @@ import java.util.ArrayList;
 
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
@@ -193,6 +194,15 @@ public class ListOfFriends extends ListActivity{
 	
 	private class DownloadTask extends AsyncTask<String, Integer, String>{
 	    String bitmap = null;
+	    protected ProgressDialog progressDialog;
+
+        @Override
+        protected void onPreExecute()
+        {
+            super.onPreExecute();
+            progressDialog = ProgressDialog.show(ListOfFriends.this, "List of your friends is loading...", "Please wait until the retrieve is complete!", true, false);
+        }
+	    
 	    @Override
 	    protected String doInBackground(String... url) {
 	        try{
@@ -243,7 +253,7 @@ public class ListOfFriends extends ListActivity{
 	    	}
    	
 	    	
-	    	
+	    	progressDialog.dismiss();
 	    	/** Showing a message, on completion of download process */
 	        //Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
 	    }

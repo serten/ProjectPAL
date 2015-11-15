@@ -7,6 +7,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
@@ -116,7 +117,7 @@ public class SearchForFriends extends ListActivity {
 	            //urlConnection.connect();
 	            urlConnection.setRequestMethod("POST");
 	            
-	            String urlParameters = "inputString="+inputString;
+	            String urlParameters = "inputString="+inputString+"&userID="+userID;
 	    		
 	    		// Send post request
 	            urlConnection.setDoOutput(true);
@@ -154,6 +155,14 @@ public class SearchForFriends extends ListActivity {
 
 	 private class NetworkTask extends AsyncTask<String, Integer, String>{
 	        String bitmap = null;
+	        protected ProgressDialog progressDialog;
+
+	        @Override
+	        protected void onPreExecute()
+	        {
+	            super.onPreExecute();
+	            progressDialog = ProgressDialog.show(SearchForFriends.this, "Friends are being searched...", "Please wait until the retrieve is complete!", true, false);
+	        }
 	        @Override
 	        protected String doInBackground(String... url) {
 	            try{
@@ -170,7 +179,7 @@ public class SearchForFriends extends ListActivity {
 	            /** Getting a reference to ImageView to display the
 	            * downloaded image
 	            */
-
+	        	
 	            
 	            Log.d("7Error", "7");
 	            if (result.contains("denied")){
@@ -204,6 +213,8 @@ public class SearchForFriends extends ListActivity {
 	            	
 		    		createList(namesArray);
 	            }
+	            
+	            progressDialog.dismiss();
 	            /** Showing a message, on completion of download process */
 	            //Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
 	        }
@@ -223,11 +234,13 @@ public class SearchForFriends extends ListActivity {
 		 	addFriendID=""+idsArray[position];
 			//String selectedValue = (String) getListAdapter().getItem(position);
 			//Toast.makeText(this, addFriendID, Toast.LENGTH_SHORT).show();
-		 	AddFriendTask  addFriendTask = new  AddFriendTask();
+		 	
+		 		AddFriendTask  addFriendTask = new  AddFriendTask();
             
-            /** Starting the task created above */
-            String url="http://54.187.253.246/selectuser/addFriend_postgre.php";
-            addFriendTask.execute(url);
+	            /** Starting the task created above */
+	            String url="http://54.187.253.246/selectuser/addFriend_postgre.php";
+	            addFriendTask.execute(url);
+
 
 		}
 	 

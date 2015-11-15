@@ -1,6 +1,10 @@
 package com.example.googleMaps;
 
+import java.io.BufferedInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -18,6 +22,7 @@ import org.json.JSONObject;
 import android.R.menu;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
@@ -72,6 +77,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 public class FollowMe extends FragmentActivity implements OnMapReadyCallback,ConnectionCallbacks, OnConnectionFailedListener,LocationListener, android.location.LocationListener {
 	private final LatLng LOCATION_LA = new LatLng(34.022324, -118.282522);
@@ -126,7 +133,6 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 	
 	ArrayList<Integer> polyType = new ArrayList<Integer>();
 	
-	ArrayList<Polygon> polyShapeMap1 = new ArrayList<Polygon>();
 	
 	int counterPoly = 0;
 	int counterCirc = 0;
@@ -140,6 +146,10 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 	Bundle info;
 	
 	private LatLng circCenter;
+	
+	CharSequence[] friendNames;
+	CharSequence[] friendIds;
+	String followedFriendId;
     
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -166,16 +176,6 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 		map.setMyLocationEnabled(true);
 		map.getUiSettings().setZoomControlsEnabled(true);
 		
-		//eT2 = (EditText) findViewById(R.id.editText2);
-		//eT3 = (EditText) findViewById(R.id.editText3);
-		
-		
-
-		/*TabSpec spec2 = tabHost.newTabSpec("tab1");
-		spec2.setContent(R.id.tab1);
-		spec2.setIndicator("Edit the Zones", null);
-		tabHost.addTab(spec2);
-		*/
 		mRequestingLocationUpdates = false;
         mLastUpdateTime = "";
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -186,104 +186,146 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
         // Kick off the process of building a GoogleApiClient and requesting the LocationServices
         // API.
         buildGoogleApiClient();
+        
+        //get friends
+        DownloadTask downloadTask = new DownloadTask();
+        
+        /** Starting the task created above */
+        downloadTask.execute("http://54.187.253.246/selectuser/friendlist_postgre.php");
 	}
 
+	@SuppressWarnings("finally")
+	private String downloadUrl(String strUrl) throws IOException{
 	
-	private void drawPolygon(){
+	    String strFileContents=null;
+	    BufferedInputStream in=null;
 		
-		PolygonOptions options = null;
-		if (!onDrag){
-			options = new PolygonOptions()
-			.fillColor(0x330000FF)
-			.strokeWidth(3)
-			.strokeColor(Color.BLUE);
-			Log.d("error1polyType-size ",String.valueOf(polyType.size()));
-			Log.d("error1counterPoly ",String.valueOf(counterPoly));
-			polyShape.add(map2.addPolygon(options));
-			Log.d("error1counterPoly ","ok1");
-			polyType.add(poly_num);
-			Log.d("error1counterPoly ","ok2");
-			counterPoly ++;
-			Log.d("error1","ok3");
-		}else{
-				//removeEverything();
-				Log.d("errDrag","ok1");
-				polyShape = new ArrayList<Polygon>();
-				for (int j = 0; j < counterPoly; j++) {
-					Log.d("errDrag","ok2");
-					options = new PolygonOptions()
-					.fillColor(0x330000FF)
-					.strokeWidth(3)
-					.strokeColor(Color.BLUE);
-					Log.d("errDrag","ok3");
-					Log.d("errDrag","ok5");
-					polyShape.add(map2.addPolygon(options));
-				}
-		}
+	    try{
+	        URL url = new URL(strUrl);
+	        /** Creating an http connection to communcate with url */
+	        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+	        
+	        /** Connecting to url */
+	        //urlConnection.connect();
+	        urlConnection.setRequestMethod("POST");
+	        
+	        String urlParameters = "userID="+userID;
+			
+			// Send post request
+	        urlConnection.setDoOutput(true);
+			DataOutputStream wr = new DataOutputStream(urlConnection.getOutputStream());
+			wr.writeBytes(urlParameters);
+			wr.flush();
+			wr.close();
+	
+	        
+	        //urlConnection.connect();
+	        in = new BufferedInputStream(urlConnection.getInputStream() );
+	        byte[] contents = new byte[1024];
+	
+	        int bytesRead=0;
+	         
+	        while( (bytesRead = in.read(contents)) != -1){ 
+	           strFileContents = new String(contents, 0, bytesRead);               
+	        }
+	        
+			
+	
+	        /** Creating a bitmap from the stream returned from the url */
+	        
+	
+	    }catch(Exception e){
+	        Log.d("Exception while downloading url", e.toString());
+	        
+	    }finally{
+	        in.close();
+	        return strFileContents;
+	       
+	    }
+	   
 	}
 	
+	private class DownloadTask extends AsyncTask<String, Integer, String>{
+	    String bitmap = null;
+	    protected ProgressDialog progressDialog;
 
+        @Override
+        protected void onPreExecute()
+        {
+            super.onPreExecute();
+            progressDialog = ProgressDialog.show(FollowMe.this, "Friends information is loading...", "Please wait until the retrieve is complete!", true, false);
+        }
+	    @Override
+	    protected String doInBackground(String... url) {
+	        try{
+	            bitmap = downloadUrl(url[0]);
+	        }catch(Exception e){
+	            Log.d("Background Task",e.toString());
+	        }
+	        return bitmap;
+	    }
 	
-	
+	    @Override
+	    protected void onPostExecute(String result) {
+	        /** Getting a reference to ImageView to display the
+	        * downloaded image
+	        */
+	    	
+	    	if(result.contains("denied"))
+	    	{
+	    		String[] parts={"NO RESULT"};
+				friendNames = null;		        
+	    		//createList(parts);
+	    		
+	    	}
+	    	else
+	    	{
+	    		
+				int d=result.length();
+	    		String n=result.substring(0, d-7);
+	    		result=n;
+	    		String[] parts = result.split(" ");
+            	//Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+            	ArrayList<String> names = new ArrayList<String>();
+            	
+            	for(int i = 0; i<parts.length/2;i++)
+            	{
+            		  names.add(parts[i]);  		
+            	
+            	}
+            	String[] namesArray = new String[names.size()];
+            	namesArray = names.toArray(namesArray);
+            	friendNames=namesArray;
+            	
+            	ArrayList<String> ids = new ArrayList<String>();
+            	for(int i = parts.length/2; i<parts.length;i++)
+            	{
+            		  ids.add(parts[i]);  		
+            	
+            	}
+            	String[] idArray = new String[ids.size()];
+            	idArray = ids.toArray(idArray);
+            	friendIds=idArray;
+            	//idsArray = new String[ids.size()];
+            	//idsArray = ids.toArray(idsArray);            	
+            	
+            	
+	    		//createList(namesArray);
+	    	}
+   	
+	    	
+	    	progressDialog.dismiss();
+	    	/** Showing a message, on completion of download process */
+	        //Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+	    }
+	}
 	
 	private void removeEverything(){
 		
-		Log.d("error0 ","rmveth");
+		map.clear();
+		polyType = new ArrayList<Integer>();
 		
-		if (!holdChange){
-			if (!onDrag){
-				Log.d("error1 ","rmveth");
-				Log.d("error1size ",String.valueOf(polyShape.size()));
-				if (polyShape.size()!=0 && polyShape.get(0) != null){
-					Log.d("error2 ","rmveth");
-					
-					Log.d("error3 ","rmveth");
-					Log.d("error3CP ",String.valueOf(counterPoly));
-					for (int i = counterPoly; i>0 ; i--) {
-						Log.d("error3i ",String.valueOf(i));
-						polyShape.get(i-1).remove();
-					}
-					Log.d("error4 ","rmveth");
-					polyShape = new ArrayList<Polygon>();
-					
-				}
-				Log.d("error5 ","rmveth");
-				counterPoly = 0;
-			}else{
-				if (polyShape.size()!=0){
-					Log.d("error2-onDrag","rmveth");
 
-					for (int i = 0 ; i<counterPoly ; i++) {
-						polyShape.get(i).remove();
-						Log.d("error3-onDrag","rmveth");
-						polyShape.set(i,null);
-					}
-					polyShape = new ArrayList<Polygon>();
-					Log.d("error4-onDrag ","rmveth");
-				}
-				Log.d("error4-1-onDrag ","rmveth");
-				Log.d("onDrag-end","rmveth");
-			}
-		}else{
-			if (onDrag){
-				if (polyShape.size()!=0){
-					Log.d("error2-onDrag2","rmveth");
-
-					for (int i = 0 ; i<counterPoly ; i++) {
-						polyShape.get(i).remove();
-						Log.d("error3-onDrag2","rmveth");
-						Log.d("i = ",String.valueOf(i));
-						polyShape.set(i,null);
-					}
-					polyShape = new ArrayList<Polygon>();
-					Log.d("error4-onDrag ","rmveth");
-				}
-				Log.d("error4-1-onDrag ","rmveth");
-				Log.d("onDrag-end","rmveth");
-			}else{
-				//do nothing
-			}
-		}
 	}
 	
 
@@ -324,18 +366,16 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 			
 			followedFriend.setText("");
 			
+			removeEverything();
+			
 			
 		}
 		else
 		{
 						
-			final CharSequence[] items = {
-	                "Rajesh", "Mahesh", "Vijayakumar"
-	        };
-
 	        AlertDialog.Builder builder = new AlertDialog.Builder(this);
 	        builder.setTitle("Make your selection");
-	        builder.setItems(items, new DialogInterface.OnClickListener() {
+	        builder.setItems(friendNames, new DialogInterface.OnClickListener() {
 	            public void onClick(DialogInterface dialog, int item) {
 	            	
 	            	Button followFriends = (Button) findViewById(R.id.btnFollowFriends);
@@ -348,9 +388,12 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 	    			
 	    			TextView followedFriend = (TextView) findViewById(R.id.followedFriend);
 	    			
-	    			followedFriend.setText(items[item]);
+	    			followedFriend.setText(friendNames[item]+"  is followed" );
 	    			
 	    			followedFriend.bringToFront();
+	    			followedFriendId=friendIds[item].toString();
+	    			new polyShapeGet().execute();
+	    			
 	            }
 	        });
 	        AlertDialog alert = builder.create();
@@ -433,7 +476,7 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
      */
     private void updateUI() {
         if (mCurrentLocation != null) {
-        	gotoLocation(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude(),10);
+        	gotoLocation(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude(),1);
         	LatLng myPos = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
         	double i = (double) mCurrentLocation.getLatitude();
         	double j = (double) mCurrentLocation.getLongitude();
@@ -458,6 +501,13 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
         	//eT3.setText(String.format("%.6f",j));
         	
         	//map2.addMarker(new MarkerOptions().position(myPos).title("We Are Here! Suleyman-Keyvan-Ali"));
+        	
+        	if(followingStarted)
+        	{
+        		polyType = new ArrayList<Integer>();
+        		new polyShapeGet().execute();
+        	}
+        	
         }
     }
     
@@ -493,68 +543,28 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 		}
     }
     
-    private class polyShapeGet extends AsyncTask<String, Integer, ArrayList<PolygonOptions>>{ // X,Y,Z
+    private class polyShapeGet extends AsyncTask<String, Integer, String>{ // X,Y,Z
     	
-    	protected ArrayList<PolygonOptions> doInBackground(String... params) { // Z,X
+    	protected String doInBackground(String... params) { // Z,X
     		
-    		ArrayList<PolygonOptions> options = new ArrayList<PolygonOptions>();
+    		
     		try {
-				StringBuilder url = new StringBuilder("http://cs-server.usc.edu:1111/"+userName+"-allMarkers.txt");
+				StringBuilder url = new StringBuilder("http://54.187.253.246/selectuser/get_path_postgre.php?userID="+followedFriendId);
 				HttpGet get = new HttpGet(url.toString());
 				HttpClient client = new DefaultHttpClient();
 				HttpResponse r = client.execute(get);
 				int status = r.getStatusLine().getStatusCode();
 				String data = null;
 				JSONObject explrObject = null;
-				
+				data = null;
 				Log.d("Error", "test0");
 				if (status == 200) {
 					HttpEntity e = r.getEntity();
 					Log.d("polyShapeGet-0", "hi");
 					data = EntityUtils.toString(e);
-					Log.d("polyShapeGet-0", "hi-1");
-					explrObject = new JSONObject(data);
-					Log.d("polyShapeGet-1", explrObject.toString());
-					JSONObject polys = new JSONObject(
-							explrObject.getString("polys"));
-					counterPoly = Integer.valueOf(polys.getString("polyCounts"));
-					
-					
-					Log.d("polyShapeGet-2", String.valueOf(counterPoly));
-					//Log.d("error1polyType-size ",String.valueOf(polyType.size()));
-					
-					for (int i = 0; i < counterPoly; i++) {
-						Log.d("polyShapeGet-2", "i="+String.valueOf(i)+" "+String.valueOf(counterPoly));
-						options.add(new PolygonOptions()
-						.fillColor(0x330000FF)
-						.strokeWidth(3)
-						.strokeColor(Color.BLUE));
-						Log.d("polyShapeGet-3.1", String.valueOf(counterPoly));
-						JSONObject pol = new JSONObject(
-								polys.getString("poly"+i));
-						Log.d("polyShapeGet-3.2", String.valueOf(counterPoly));
-						polyType.add(Integer.valueOf(pol.getString("polyType")));
-						JSONObject points = new JSONObject(
-								pol.getString("points"));
-						for (int j = 0; j < polyType.get(i); j++) {
-							JSONObject pointIs = new JSONObject(
-									points.getString("point"+j+"is"));
-							Log.d("polyShapeGet-3.3", String.valueOf(counterPoly));
-							options.get(i).add(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))));
-						}
-						
-					}
-					Log.d("error1counterPoly ",String.valueOf(counterPoly));
-					
-					Log.d("error1counterPoly ","ok1");
-					
-					Log.d("Error", "test3");
-					return options;
-					
-				} else {
-					Toast.makeText(FollowMe.this, "error",
-							Toast.LENGTH_SHORT);
 				}
+				return data;
+					
 
 			} catch (ClientProtocolException e) {
 				// TODO Auto-generated catch block
@@ -562,16 +572,69 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			} catch (JSONException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-				System.out.println(e1);
 			}
 			return null;
 		}
 
-		protected void onPostExecute(ArrayList<PolygonOptions> result) { // Z
-			if (result!=null){
+		protected void onPostExecute(String data) { // Z
+			ArrayList<PolylineOptions> options = new ArrayList<PolylineOptions>();
+			Log.d("polyShapeGet-0", "hi-1");
+			
+			try{
+				
+				JSONObject explrObject = new JSONObject(data);
+				Log.d("polyShapeGet-1", explrObject.toString());
+				JSONObject polys = new JSONObject(
+						explrObject.getString("polys"));
+				counterPoly = Integer.valueOf(polys.getString("polyCounts"));
+				
+				
+				Log.d("polyShapeGet-2", String.valueOf(counterPoly));
+				//Log.d("error1polyType-size ",String.valueOf(polyType.size()));
+				
+				if(followingStarted)
+				{
+					for (int i = 0; i < counterPoly; i++) {
+						Log.d("polyShapeGet-2", "i="+String.valueOf(i)+" "+String.valueOf(counterPoly));
+						options.add(new PolylineOptions()
+						.width(20)
+						.color(Color.BLUE));
+						Log.d("polyShapeGet-3.1", String.valueOf(counterPoly));
+						JSONObject pol = new JSONObject(
+								polys.getString("poly"+i));
+						Log.d("polyShapeGet-3.2", String.valueOf(counterPoly));
+						polyType.add(Integer.valueOf(pol.getString("polyType")));
+						Log.d("polytype:", String.valueOf(polyType));
+						JSONObject points = new JSONObject(
+								pol.getString("points"));
+						for (int j = 0; j < polyType.get(i); j++) {
+							JSONObject pointIs = new JSONObject(
+									points.getString("point"+j+"is"));
+							//JSONObject point2Is = new JSONObject(
+								//	points.getString("point"+(j+1)+"is"));
+							Log.d("polyShapeGet-3.3", String.valueOf(counterPoly));
+							/*Polyline line = map.addPolyline(new PolylineOptions()
+						     .add(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))),new LatLng(Double.valueOf(point2Is.getString("lat")),Double.valueOf(pointIs.getString("long"))))
+						     .width(5)
+						     .color(Color.RED));*/
+							
+							options.get(i).add(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))));
+							map.addPolyline(options.get(i));
+						}
+					}
+				}
+			} 
+			catch (JSONException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+				System.out.println(e1);
+			}
+				
+			}
+			
+			
+		
+			/*if (result!=null){
 				for (int i = 0; i < result.size(); i++) {
 
 					for (int j = 0; j < result.get(i).getPoints().size(); j++) {
@@ -590,16 +653,14 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 						//markers.get(i).add(map2.addMarker(options));
 					}
 					//polyShape.add(map2.addPolygon(result.get(i)));
-					polyShapeMap1.add(map.addPolygon(result.get(i)));
+					//polyShapeMap1.add(map.addPolyline(result.get(i)));
 				}
-			}
+			}*/
 		}
 		
 		
-		protected void onCancelled (ArrayList<PolygonOptions> result){
-			super.onCancelled(result);
-		}
-    }
+		
+    
     
  
     protected void stopLocationUpdates() {
@@ -735,18 +796,6 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 	}
 	
 	
-	public void eraseMap1(){
-		if (polyShapeMap1.size()!=0 && polyShapeMap1.get(0) != null){
-			int sizeShapeOnMap1 = polyShapeMap1.size();
-			for (int i = sizeShapeOnMap1; i>0 ; i--) {
-				polyShapeMap1.get(i-1).remove();
-			}
-			polyShapeMap1 = new ArrayList<Polygon>();
-		}
-		
-	}
-	
-
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// TODO Auto-generated method stub

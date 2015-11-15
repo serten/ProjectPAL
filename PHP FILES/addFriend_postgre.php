@@ -5,12 +5,18 @@ $result;
 
 if(($input=$_POST["inputString"])&&($u_id=$_POST["userID"]))
 {
-	if($rrr=control())
+	if($input==$u_id)
 	{
-		echo("$rrr");
+		echo ("denied: User and Friend Same");
 	}
 	else{
-		echo("deniedforentry");
+		if($rrr=control())
+		{
+			echo("$rrr");
+		}
+		else{
+			echo("denied for entry");
+		}
 	}
 }
 else
@@ -25,7 +31,7 @@ function control()
 
 	$conn = pg_connect("host=postgredb.ctnfr2pmdvmf.us-west-2.rds.amazonaws.com port=5432 dbname=postgreDB user=postgreuser password=6089qwerty");
 	if (!$conn) {
-	  echo "An error occurred.\n";
+	  echo "denied An error occurred.\n";
 	  exit;
 	}	
 	ini_set('date.timezone', 'America/Los_Angeles');
