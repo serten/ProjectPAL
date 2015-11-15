@@ -640,14 +640,16 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 								map.addMarker(new MarkerOptions()
 			                     .position(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))))
 			                     .snippet("Lat: "+Double.valueOf(pointIs.getString("lat"))+"\nLong:"+Double.valueOf(pointIs.getString("long")))
-			                     .icon(BitmapDescriptorFactory.fromResource(R.drawable.middlepointblue)));
+			                     .icon(BitmapDescriptorFactory.fromResource(R.drawable.middlepointblue))
+			                     .anchor(0.5f, 0.5f));
 							}
 							else
 							{
 								map.addMarker(new MarkerOptions()
 			                     .position(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))))
 			                     .snippet("Lat: "+Double.valueOf(pointIs.getString("lat"))+"\nLong:"+Double.valueOf(pointIs.getString("long")))
-			                     .icon(BitmapDescriptorFactory.fromResource(R.drawable.middlepoint)));
+			                     .icon(BitmapDescriptorFactory.fromResource(R.drawable.middlepoint))
+			                     .anchor(0.5f, 0.5f));
 								
 							}
 						}
