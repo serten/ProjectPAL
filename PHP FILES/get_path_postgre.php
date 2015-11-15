@@ -6,10 +6,12 @@ if (!$conn) {
   echo "An error occurred.\n";
   exit;
 }
-
+	ini_set('date.timezone', 'America/Los_Angeles');
+	$time = date('H:i:s', time()); 
+	$date = date('Y-m-d')." ".$time;
 
 // this section creates a table for alertzone information
-$result = pg_query($conn, "SELECT ST_AsGeoJSON(PATHCOORDINATES) FROM PATHPOINTS WHERE USERID='$u_id'");
+$result = pg_query($conn, "SELECT ST_AsGeoJSON(PATHCOORDINATES) FROM PATHPOINTS WHERE USERID='$u_id' AND PATHCREATETIME >= (TIMESTAMP'$date' - interval '2 minute') order by PATHCREATETIME asc");
 if (!$result) {
   echo "An error occurred.\n";
   exit;

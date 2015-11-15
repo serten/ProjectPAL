@@ -410,6 +410,7 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 			startPath.setText("Start Path");
 			startPath.getBackground().setColorFilter(new LightingColorFilter(0xffcccccc, 0xff000000));
 			Toast.makeText(this, "PATH SAVING ENDED...", Toast.LENGTH_LONG).show();
+			removeEverything();
 		}
 		else
 		{
@@ -419,7 +420,8 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 			int color = Color.parseColor("#AE6118"); //The color u want           
 			
 			v.getBackground().setColorFilter(new LightingColorFilter(0xff000000, 0xFFAA0000));
-			Toast.makeText(this, "PATH SAVING STARTED...", Toast.LENGTH_LONG).show();
+			Toast.makeText(this, "PATH SAVING STARTED...", Toast.LENGTH_LONG).show();			
+			new polyShapeGet().execute();
 		}
 
 		
@@ -502,7 +504,7 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
         	
         	//map2.addMarker(new MarkerOptions().position(myPos).title("We Are Here! Suleyman-Keyvan-Ali"));
         	
-        	if(followingStarted)
+        	if(followingStarted||pathStarted)
         	{
         		polyType = new ArrayList<Integer>();
         		new polyShapeGet().execute();
@@ -549,7 +551,11 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
     		
     		
     		try {
-				StringBuilder url = new StringBuilder("http://54.187.253.246/selectuser/get_path_postgre.php?userID="+followedFriendId);
+    			StringBuilder url=null;
+    			if(pathStarted)
+    				url = new StringBuilder("http://54.187.253.246/selectuser/get_path_postgre.php?userID="+userID);
+    			if(followingStarted)
+    				url = new StringBuilder("http://54.187.253.246/selectuser/get_path_postgre.php?userID="+followedFriendId);
 				HttpGet get = new HttpGet(url.toString());
 				HttpClient client = new DefaultHttpClient();
 				HttpResponse r = client.execute(get);
@@ -592,13 +598,22 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 				Log.d("polyShapeGet-2", String.valueOf(counterPoly));
 				//Log.d("error1polyType-size ",String.valueOf(polyType.size()));
 				
-				if(followingStarted)
+				if(followingStarted||pathStarted)
 				{
 					for (int i = 0; i < counterPoly; i++) {
 						Log.d("polyShapeGet-2", "i="+String.valueOf(i)+" "+String.valueOf(counterPoly));
+						if(pathStarted)
+						{
+						options.add(new PolylineOptions()
+						.width(20)
+						.color(Color.GREEN));
+						}
+						if(followingStarted)
+						{
 						options.add(new PolylineOptions()
 						.width(20)
 						.color(Color.BLUE));
+						}
 						Log.d("polyShapeGet-3.1", String.valueOf(counterPoly));
 						JSONObject pol = new JSONObject(
 								polys.getString("poly"+i));
@@ -620,6 +635,21 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 							
 							options.get(i).add(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))));
 							map.addPolyline(options.get(i));
+							
+							if((j+1 )== polyType.get(i)){							
+								map.addMarker(new MarkerOptions()
+			                     .position(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))))
+			                     .snippet("Lat: "+Double.valueOf(pointIs.getString("lat"))+"\nLong:"+Double.valueOf(pointIs.getString("long")))
+			                     .icon(BitmapDescriptorFactory.fromResource(R.drawable.middlepointblue)));
+							}
+							else
+							{
+								map.addMarker(new MarkerOptions()
+			                     .position(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))))
+			                     .snippet("Lat: "+Double.valueOf(pointIs.getString("lat"))+"\nLong:"+Double.valueOf(pointIs.getString("long")))
+			                     .icon(BitmapDescriptorFactory.fromResource(R.drawable.middlepoint)));
+								
+							}
 						}
 					}
 				}
