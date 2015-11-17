@@ -40,6 +40,7 @@ import android.content.res.Configuration;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.LightingColorFilter;
+import android.graphics.Point;
 import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
@@ -695,15 +696,31 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		final TabHost tabHost = (TabHost) findViewById(R.id.tabhost);
 		tabHost.setup();
 
-		TabSpec spec1 = tabHost.newTabSpec("tab1");
-		spec1.setContent(R.id.tab1);
-		spec1.setIndicator("The Zones", null);
-		tabHost.addTab(spec1);
-
 		TabSpec spec2 = tabHost.newTabSpec("tab2");
 		spec2.setContent(R.id.tab2);
 		spec2.setIndicator("Edit the Zones", null);
 		tabHost.addTab(spec2);
+		
+		TabSpec spec1 = tabHost.newTabSpec("tab1");
+		spec1.setContent(R.id.tab1);
+		spec1.setIndicator("The Zones", null);
+		tabHost.addTab(spec1);
+		
+		
+		//tabHost.setCurrentTab(1);
+		
+		Handler handler1 = new Handler();
+		handler1.postDelayed(new Runnable() {			
+			public void run() {
+		     // Actions to do after 0.6 seconds
+				tabHost.setCurrentTab(1);
+				Handler handler2 = new Handler();
+				handler2.postDelayed(new Runnable() {
+					public void run() {
+					    // Actions to do after 1.2 seconds
+						tabHost.setCurrentTab(1);
+				}}, 1200);
+		    }}, 600);
 		
 		mRequestingLocationUpdates = false;
         mLastUpdateTime = "";
@@ -1193,20 +1210,15 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 //		CameraUpdate update = CameraUpdateFactory.newLatLng(LOCATION_BURNABY);
 		map.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
 		map2.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
-		CameraUpdate update = CameraUpdateFactory.newLatLngZoom(LOCATION_LA, 9);
-		map.animateCamera(update);
 	}
 	public void onClick_Norm() {
 		map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 		map2.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-		CameraUpdate update = CameraUpdateFactory.newLatLngZoom(LOCATION_LA, 9);
-		map.animateCamera(update);		
 	}
 	public void onClick_Ter() {
 		map.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
 		map2.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
-		CameraUpdate update = CameraUpdateFactory.newLatLngZoom(LOCATION_LA, 9);
-		map.animateCamera(update);
+		
 	}
 
 	@Override
@@ -1547,7 +1559,9 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		}
 
 		protected void onPostExecute(ArrayList<PolygonOptions> result) { // Z
-
+			
+			
+			
 			if (result!=null){
 				for (int i = 0; i < result.size(); i++) {
 					markers.add(new ArrayList<Marker>());
@@ -1573,11 +1587,41 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 							options.icon(BitmapDescriptorFactory.fromResource(R.drawable.but_close));
 						}
 						markers.get(i).add(map2.addMarker(options));
+						
 					}
+					
+					
 					polyShape.add(map2.addPolygon(result.get(i)));
 					polyShapeMap1.add(map.addPolygon(result.get(i)));
 				}
+				if (0<result.size()){
+					Handler handler = new Handler();
+			        
+					handler.postDelayed(new Runnable() {			
+						public void run() {
+					     // Actions to do after 0.5 seconds
+							LatLngBounds.Builder builder = new LatLngBounds.Builder();
+							for (int j = 0; j < markers.size(); j++) {
+								for (Marker m : markers.get(j)) {
+						            builder.include(m.getPosition());
+						        }
+							}
+							
+							LatLngBounds bounds = builder.build();
+					        int padding = 10; // offset from edges of the map
+					                                            // in pixels
+					        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
+					                padding);
+					        map.moveCamera(update);
+							map2.moveCamera(update);
+							Toast.makeText(AlertZone.this, "error",
+									Toast.LENGTH_SHORT);
+							
+					    }}, 500);
+				}
 			}
+			
+			
 			progressDialog.dismiss();
 		}
 		
@@ -2397,6 +2441,14 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		        for (Marker m : markers.get(counterWait)) {
 		            builder.include(m.getPosition());
 		        }
+		        
+				/*for (int j = 0; j < polyType.get(counterWait); j++) {
+					//builder.include(polyShape.get(counterWait).getPoints());
+					for (LatLng m : polyShapeMap1.get(counterWait).getPoints()) {
+			            builder.include(m);
+			        }
+				}*/
+			
 		        LatLngBounds bounds = builder.build();
 		        int padding = 100; // offset from edges of the map
 		                                            // in pixels
