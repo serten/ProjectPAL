@@ -26,10 +26,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.R.menu;
+import android.R.string;
 import android.app.ActionBar;
 import android.app.ActionBar.OnNavigationListener;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.DialogInterface;
@@ -37,6 +39,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.LightingColorFilter;
 import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
@@ -54,8 +57,10 @@ import android.support.v4.view.MenuItemCompat.OnActionExpandListener;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.internal.view.menu.MenuView.ItemView;
 import android.support.v7.widget.SearchView;
+import android.text.InputType;
 import android.text.format.DateFormat;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -67,6 +72,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TabHost;
 import android.widget.TabHost.TabSpec;
@@ -94,10 +100,12 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.android.gms.plus.model.people.Person.Name;
 
 public class AlertZone extends FragmentActivity implements OnMapReadyCallback,ConnectionCallbacks, OnConnectionFailedListener,LocationListener, android.location.LocationListener {
 	private final LatLng LOCATION_LA = new LatLng(34.022324, -118.282522);
@@ -154,6 +162,8 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	private int circRad = 10000;
 	private boolean circleDrag = false;
 	ArrayList<Polygon> polyShape = new ArrayList<Polygon>();
+	ArrayList<String> polyNames = new ArrayList<String>();
+	ArrayList<String> polyNamesTrash = new ArrayList<String>();
 	ArrayList<Circle> circShape = new ArrayList<Circle>();
 	ArrayList<Integer> polyType = new ArrayList<Integer>();
 	ArrayList<Integer> circType = new ArrayList<Integer>();
@@ -162,10 +172,14 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	int counterPoly = 0;
 	int counterCirc = 0;
 	int markClick = 0;
+	int polyBeingShown = -1;
+	int viewBeingShown = 0;
 	MenuItem itemSel;
 	
 	Marker markerWithInfo;
 	Marker markerOnDrag;
+	EditText name;
+	String polyName;
 	
 	Activity activity;
 	Bundle info;
@@ -183,6 +197,8 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
             "Hold is On",
             "Hols is Off",
         };
+    
+    
      
    
 	@Override
@@ -398,21 +414,27 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				for (int i = 0; i<counterPoly;i++){
 					Log.d("error2 ","markListenr");
 					if (markers.get(i).size()!=0 && markerSel.equals(markers.get(i).get(0))){
+						polyBeingShown = -1;
 						Log.d("mklisten-1 ","markListenr");
 						markerSel.hideInfoWindow();
 						List<List<Marker>> markersTemp = new ArrayList<List<Marker>>(); 
 						ArrayList<Polygon> polyShapeTemp = new ArrayList<Polygon>();
+						ArrayList<String> polyNamesTemp = new ArrayList<String>();
 						//ArrayList<Marker> markerTemp = new ArrayList<Marker>();
 						//ArrayList<Circle> circShapeTemp = new ArrayList<Circle>();
 						ArrayList<Integer> polyTypeTemp = new ArrayList<Integer>();
+						
 						Log.d("mklisten-2 ","markListenr");
-						for (int k=0;k<counterPoly;k++){
+						for (int k=0; k<counterPoly; k++){
 							Log.d("mklisten-3 ","markListenr");
 							Log.d("counterPoly= ",String.valueOf(counterPoly));
 							if (k!=i){
 								Log.d("k= ",String.valueOf(k));
 								markersTemp.add(markers.get(k));
 								polyShapeTemp.add(polyShape.get(k));
+								Log.d("selector ","1");
+								polyNamesTemp.add(polyNames.get(k));
+								Log.d("selector ","1");
 								polyTypeTemp.add(polyType.get(k));
 							}
 						}
@@ -426,18 +448,22 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 						Log.d("i ",String.valueOf(i));
 						Log.d("shape.size(): ",String.valueOf(polyShape.size()));
 						polyShape.get(i).remove();
+						
 						Log.d("error5.1 ","markListenr");
 						for (int j = i;j<counterPoly-1;j++) {
 							Log.d("error6 ","markListenr");
 							markers.set(j, markers.get(j+1));
 							Log.d("error7 ","markListenr");
 							polyShape.set(j,polyShape.get(j+1));
+							polyNames.set(j,polyNames.get(j+1));
 							Log.d("error8 ","markListenr");
 							polyType.set(j,polyType.get(j+1));
 						}
 						
 						Log.d("error10","markListenr");
-						polyShape.set(counterPoly-1, null);
+						polyShape.set(counterPoly-1, null);						
+						polyNames.remove(counterPoly-1);
+						//polyNames.set(counterPoly-1, null);
 						Log.d("error11","markListenr");
 						polyType.set(counterPoly-1, null);
 						
@@ -446,6 +472,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 						//markers.get(counterPoly-1).clear();
 						markers = markersTemp;
 						polyShape = polyShapeTemp;
+						polyNames = polyNamesTemp;
 						polyType = polyTypeTemp;
 						counterPoly--;
 						Log.d("counterPoly: ",String.valueOf(counterPoly));
@@ -455,6 +482,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 						if (counterPoly ==0){
 							markers = new ArrayList<List<Marker>>();
 							polyShape = new ArrayList<Polygon>();
+							polyNames = new ArrayList<String>();
 							polyType = new ArrayList<Integer>();
 						}
 							
@@ -709,6 +737,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			markers = new ArrayList<List<Marker>>(); 
 			//marker = new ArrayList<Marker>();
 			polyShape = new ArrayList<Polygon>();
+			polyNames = new ArrayList<String>();
 			polyType = new ArrayList<Integer>();
 		}
 		
@@ -766,6 +795,8 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 					markers.get(counterPoly).get(0).remove();
 					markers.get(counterPoly).set(0,map2.addMarker(options));
 					drawPolygon();
+					polyNames();
+					//Log.d("3-polyName is:",polyName);
 				}
 				Log.d("error6 ","set");
 			
@@ -831,6 +862,137 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		}
 	}
 	
+/*	private void polyNames(){
+		
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("Name The Polygon")
+				.setCancelable(false)
+				.setNegativeButton("Cancel.",
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog,
+									int id) {
+								//dialog.cancel();
+								Toast.makeText(AlertZone.this,
+										"Can't be Cancelled! Name the polygon.",
+										Toast.LENGTH_SHORT).show();
+							}
+						})
+
+				.setPositiveButton("OK",
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog,
+									int id) {
+								Log.d("dia-1", "Hello");
+								saveShapes();
+								Log.d("dia-2", "Hello");
+								Toast.makeText(AlertZone.this,
+										"Named The Polygon",
+										Toast.LENGTH_SHORT).show();
+							}
+						});
+		AlertDialog alert = builder.create();
+		alert.show();
+	}*/
+	
+	//public Dialog onCreateDialog(Bundle savedInstanceState) {
+	private void polyNames(){
+		Log.d("polyNames: ", "1");
+	    Log.d("polyNames: ", "2");
+	    AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+	    alertDialog.setTitle("Name The Polygon");
+	    alertDialog.setMessage("Name");
+	    //LayoutInflater inflater = this.getLayoutInflater();
+	    final EditText input = new EditText(this);
+	    input.requestFocus();
+	    /*InputMethodManager imm = (InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
+		imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+		*/
+		//InputMethodManager imm = (InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
+		
+		
+		input.requestFocus();
+		input.setHint("poly name");
+	    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+	        LinearLayout.LayoutParams.MATCH_PARENT,
+	        LinearLayout.LayoutParams.MATCH_PARENT);
+	    input.setLayoutParams(lp);
+	    Log.d("polyNames: ", "3");
+	    input.setInputType(InputType.TYPE_CLASS_TEXT);
+	    alertDialog.setView(input);
+	    Log.d("polyNames: ", "4");
+	    alertDialog.setIcon(R.drawable.pol);
+	    // Inflate and set the layout for the dialog
+	    // Pass null as the parent view because its going in the dialog layout
+	    //builder.setView(inflater.inflate(R.layout.dialog_polyNames_alert_zone, null))
+	    // Add action buttons
+	    
+	    Log.d("polyNames: ", "5");
+	    alertDialog
+	    .setCancelable(false)
+	           .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+	               @Override
+	               public void onClick(DialogInterface dialog, int id) {
+	            	   	Log.d("inside alert:", "1");
+	            	   	Log.d("inside alert:", "2");
+						//name = (EditText) findViewById(R.id.pName);
+						polyName = input.getText().toString();
+						//saveShapes();
+						//Log.d("dia-3",polyName);
+						realpolyNames();
+						/*
+						Toast.makeText(AlertZone.this,
+								"Named The Polygon: "+polyName,
+								Toast.LENGTH_SHORT).show();*/
+	               }
+	           });
+	    Log.d("polyNames: ", "6");
+	    //Log.d("polyName:",polyName);
+	    AlertDialog alert = alertDialog.create();
+		alert.show();
+		//Log.d("1-polyName is:",polyName);
+		
+		
+		Log.d("polyNames Size:",String.valueOf(polyNames.size()));
+		//Log.d("polyName is:",polyName);
+		/*Toast.makeText(AlertZone.this,
+				"hello:"+ polyNames.get(0),
+				Toast.LENGTH_SHORT).show();*/
+	    
+	}
+	
+	private void realpolyNames() {
+		Log.d("2-polyName is:",polyName);
+		//polyNamesTrash.add(polyName);
+		Log.d("3-polyName is:",polyName);
+
+		boolean nameExist = false;
+		if (polyName.trim().length()==0){
+			nameExist = true;
+			polyNames();
+		}
+		
+		if (polyNames.size()!= counterPoly){
+			for (int i = 0; i < polyNames.size(); i++) {
+				Log.d("7-polyName is:",polyName);
+				if (polyNames.get(i).equals(polyName)){
+					nameExist = true;
+					polyNames();
+				}
+			}
+			if (nameExist == false)
+				polyNames.add(polyName);
+		}
+		/*InputMethodManager imm = (InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
+		imm.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
+		imm.toggleSoftInput(0, InputMethodManager.RESULT_HIDDEN);
+		hideSoftKeyboard(getWindow().getDecorView().getRootView());*/
+		
+	}
+	
+	
+	
+	
+	
 
 	private void drawCircle(LatLng ll) {
 		// TODO Auto-generated method stub
@@ -884,7 +1046,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 					}
 					Log.d("error4 ","rmveth");
 					polyShape = new ArrayList<Polygon>();
-					
+					polyNames = new ArrayList<String>();
 				}
 				Log.d("error5 ","rmveth");
 				if (circShape.size()!=0 && circShape.get(0) != null) {
@@ -911,6 +1073,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 						polyShape.set(i,null);
 					}
 					polyShape = new ArrayList<Polygon>();
+					polyNames = new ArrayList<String>();
 					Log.d("error4-onDrag ","rmveth");
 				}
 				Log.d("error4-1-onDrag ","rmveth");
@@ -939,6 +1102,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 						polyShape.set(i,null);
 					}
 					polyShape = new ArrayList<Polygon>();
+					polyNames = new ArrayList<String>();
 					Log.d("error4-onDrag ","rmveth");
 				}
 				Log.d("error4-1-onDrag ","rmveth");
@@ -1098,7 +1262,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		InputMethodManager imm = (InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
 		imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
 	}
-
+	
 	
     private void updateValuesFromBundle(Bundle savedInstanceState) {
         Log.i(TAG, "Updating values from bundle");
@@ -1345,6 +1509,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 								polys.getString("poly"+i));
 						Log.d("polyShapeGet-3.2", String.valueOf(counterPoly));
 						polyType.add(Integer.valueOf(pol.getString("polyType")));
+						polyNames.add(pol.getString("polyName"));
 						JSONObject points = new JSONObject(
 								pol.getString("points"));
 						for (int j = 0; j < polyType.get(i); j++) {
@@ -1859,7 +2024,8 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			URLMarker = "http://54.187.253.246/selectuser/save_polygons_postgre.php/?start=" + startIs + "&user="+userName
 					+ "&counterPoly=0"
 					+ "&Polytype=0"
-					+ "&polyCounts=0";
+					+ "&polyCounts=0"
+					+"&zoneName=0";
 			LinkMarker = URLMarker.replace(" ", "%20");
 			new shapeSend().execute(LinkMarker);
 		}
@@ -1869,7 +2035,8 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			
 			URLMarker = "http://54.187.253.246/selectuser/save_polygons_postgre.php/?start=" + startIs + "&userID="+userID
 					+"&counterPoly="+ i
-					+"&Polytype=" + polyType.get(i);
+					+"&Polytype=" + polyType.get(i)
+					+"&zoneName=" + polyNames.get(i);
 			
 			if (startIs){
 				URLMarker += "&polyCounts="+counterPoly;
@@ -2095,48 +2262,155 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				Toast.makeText(this, "KS will complete it later. Not Working Now!",Toast.LENGTH_SHORT).show();   
 				break;
 			case 7:
+				
+				String[] views = {"Normal View","Satellite View","Terrain View"};
+				
+				views[viewBeingShown] = ("\u2713"+views[viewBeingShown]);
+    			
+				for (int i = 0; i < 3; i++) {
+					if (i!=viewBeingShown){
+						views[i] = "   "+views[i];
+					}
+				}
+				
+				AlertDialog.Builder builder1 = new AlertDialog.Builder(this);
+    	        builder1.setTitle("Make your selection");
+    	        builder1.setItems(views, new DialogInterface.OnClickListener() {
+    	            public void onClick(DialogInterface dialog, int view) {
+    	            	viewBeingShown = view;
+	    				if (view == 0)
+	    					onClick_Norm();
+	    				else if (view == 1)
+	    					onClick_Sat();
+	    				else 
+	    					onClick_Ter();
+    	            }
+    	        }).setCancelable(false)
+	           .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+	               @Override
+	               public void onClick(DialogInterface dialog, int id) {
+	            	   	Log.d("case 11", "1");
+						Log.d("case 11", "2");
+						
+						/*Log.d("case 11",polyName);
+
+						Toast.makeText(AlertZone.this,
+								"Named The Polygon: "+polyName,
+								Toast.LENGTH_SHORT).show();*/
+	               }
+	           });;
+    	        
+    	        Log.d("alert-p:","3");
+    	        AlertDialog alert1 = builder1.create();
+    	        alert1.show();
 				onClick_Norm();
 				break;
-			case 8:
-				onClick_Sat(); 			
-				break;
-			case 9:
-				onClick_Ter();   
-				break;
-    		case 10:
-    			Toast.makeText(this, "KS will complete it later. Not Working Now!",Toast.LENGTH_SHORT).show();
-    			/*counterWait = 0;
-				for (int i = 0; i < counterPoly; i++) {    			
-    				Handler[] handler = new Handler[counterPoly];
-    				handler[i].postDelayed(new Runnable() {			
-    					public void run() {
-    				     // Actions to do after 0.5 seconds
-
-    					    	Log.d("side-pol", String.valueOf(counterWait));
-    				    	Log.d("inside-pol", String.valueOf(counterWait));
-    				    	LatLng location = markers.get(counterWait).get(0).getPosition();
-    	    				CameraUpdate update = CameraUpdateFactory.newLatLngZoom(location, 9);
-    	    				map.animateCamera(update);
-    	    				counterWait++;
-    				    
-    				    }}, 2000*(i+1));
-				}
-    			for (int i = 0; i < counterCirc; i++) {
-    				counterWait = i;
-			    	Log.d("side-circ", String.valueOf(counterWait));
-    				     // Actions to do after 0.5 seconds
-    				    	Log.d("inside-circ", String.valueOf(counterWait));
-    				    	LatLng location = marker.get(counterWait).getPosition();
-    	    				CameraUpdate update = CameraUpdateFactory.newLatLngZoom(location, 9);
-    	    				map.animateCamera(update);
-    				    }*/
+    		case 8:
+    			if (counterPoly>0)
+    				zoneTour(0);
+    			else
+    				Toast.makeText(AlertZone.this,
+    						"Currently No Zone Has Been Established!",
+    						Toast.LENGTH_SHORT).show();
+				
     			break;
+    		case 9:
+    			Log.d("case 11", "-1");
+    			
+    			String[] items = new String[counterPoly];
+    			
+    			for (int i = 0; i < counterPoly; i++) {
+    				Log.d("case 11", "0");
+    				items[i] = polyNames.get(i);
+				}	
+    			if (polyBeingShown!=-1 && polyBeingShown<counterPoly){
+    				items[polyBeingShown] = ("\u2713"+items[polyBeingShown]);
+    			}
+    			
+				for (int i = 0; i < counterPoly; i++) {
+					if (i!=polyBeingShown){
+						items[i] = "   "+items[i];
+					}
+				}
+    				
+    			
+    			//polyNames.remove(counterPoly);
+    			Log.d("counterPoly:",String.valueOf(counterPoly));
+				
+    	        AlertDialog.Builder builder2 = new AlertDialog.Builder(this);
+    	        builder2.setTitle("Make your selection");
+    	        builder2.setItems(items, new DialogInterface.OnClickListener() {
+    	            public void onClick(DialogInterface dialog, int item) {
+    	            	
+    	            	polyBeingShown = item;
+    	            	
+	    				LatLngBounds.Builder builder = new LatLngBounds.Builder();
+	    		        for (Marker m : markers.get(item)) {
+	    		            builder.include(m.getPosition());
+	    		        }
+	    		        LatLngBounds bounds = builder.build();
+	    		        int padding = 100; // offset from edges of the map
+	    		                                            // in pixels
+	    		        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
+	    		                padding);
+	    		        map.animateCamera(update);
+	    				map2.animateCamera(update);
+    	            }
+    	        }).setCancelable(false)
+	           .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+	               @Override
+	               public void onClick(DialogInterface dialog, int id) {
+	            	   	Log.d("case 11", "1");
+						Log.d("case 11", "2");
+						
+						/*Log.d("case 11",polyName);
+
+						Toast.makeText(AlertZone.this,
+								"Named The Polygon: "+polyName,
+								Toast.LENGTH_SHORT).show();*/
+	               }
+	           });;
+    	        
+    	        Log.d("alert-p:","3");
+    	        AlertDialog alert2 = builder2.create();
+    	        alert2.show();
+    	        Log.d("alert-p:","4");
+    	        break;
 			default:
 				break;
     	}
         mDrawerList.setItemChecked(position, true);
         //setTitle(mPlanetTitles[position]);
         mDrawerLayout.closeDrawer(mDrawerList);
+    }
+    
+    public void zoneTour(final int counterWait) {
+    	Handler handler = new Handler();
+		handler.postDelayed(new Runnable() {			
+			public void run() {
+		     // Actions to do after 0.5 seconds
+		
+			    Log.d("side-pol", String.valueOf(counterWait));
+		    	Log.d("inside-pol", String.valueOf(counterWait));
+		    	
+		    	LatLngBounds.Builder builder = new LatLngBounds.Builder();
+		        for (Marker m : markers.get(counterWait)) {
+		            builder.include(m.getPosition());
+		        }
+		        LatLngBounds bounds = builder.build();
+		        int padding = 100; // offset from edges of the map
+		                                            // in pixels
+		        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
+		                padding);
+		        map.animateCamera(update);
+				map2.animateCamera(update);
+				Toast.makeText(AlertZone.this,
+						"zone name: "+polyNames.get(counterWait),
+						Toast.LENGTH_SHORT).show();
+		    
+		    }}, 2000*(counterWait+1));
+		if (counterWait < counterPoly-1) 
+			zoneTour(counterWait+1);
     }
 
     @Override

@@ -55,7 +55,7 @@ echo "</table>";
 
 
 // this section creates a table for alertzone information
-$result = pg_query($conn, "SELECT ZONEID, USERID, ZONECREATETIME, ZONEACTIVATED,ST_AsGeoJSON(ZONECOORDINATES) FROM ALERTZONE");
+$result = pg_query($conn, "SELECT ZONEID, USERID, ZONECREATETIME, ZONEACTIVATED,ST_AsGeoJSON(ZONECOORDINATES),ZONENAME FROM ALERTZONE");
 if (!$result) {
   echo "An error occurred.\n";
   exit;
@@ -65,7 +65,8 @@ echo "<hr><p>ALERTZONE TABLE</p><table border=\"1\"><tr>
 		<th>USERID:</th>
 		<th>ZONECREATETIME:</th>
 		<th>ZONEACTIVATED:</th>
-		<th>ZONECOORDINATES-X</th></tr>";
+		<th>ZONECOORDINATES-X:</th>
+		<th>ZONENAME:</th></tr>";
 while ($row = pg_fetch_row($result)) {
   echo "<tr>";
   foreach ($row as &$rr)

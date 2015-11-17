@@ -9,7 +9,7 @@ if (!$conn) {
 
 
 // this section creates a table for alertzone information
-$result = pg_query($conn, "SELECT ZONEID, USERID, ZONECREATETIME, ZONEACTIVATED,ST_AsGeoJSON(ZONECOORDINATES) FROM ALERTZONE WHERE USERID='$u_id'");
+$result = pg_query($conn, "SELECT ZONENAME,ZONEID, USERID, ZONECREATETIME, ZONEACTIVATED,ST_AsGeoJSON(ZONECOORDINATES) FROM ALERTZONE WHERE USERID='$u_id'");
 if (!$result) {
   echo "An error occurred.\n";
   exit;
@@ -19,16 +19,22 @@ if (!$result) {
 		<th>USERID:</th>
 		<th>ZONECREATETIME:</th>
 		<th>ZONEACTIVATED:</th>
-		<th>ZONECOORDINATES-X</th></tr>";
+		<th>ZONECOORDINATES-X:</th>
+		<th>ZONENAME:</th></tr>";
 */	
 $polyCounts=0;
 $polyType=0;
+$polyName;
+$polyNames=[];
 $main=[];
 $coordinates=[];
 $polytypes=[];
+
 while ($row = pg_fetch_row($result)) {
+  //the name $row would be better if was $column from understanding point of view
   //echo "<tr>";
   $polyCounts++;
+  $onlyName = true;
   foreach ($row as &$rr)
   {
 	
@@ -46,12 +52,15 @@ while ($row = pg_fetch_row($result)) {
 			}
 			//echo "</td>";	
 			array_push($main,$coordinates);
+			
 			$coordinates=[];
 	}	
-	else
+	else if($onlyName)
 	{
-	
-		//echo "<td>".$rr."</td>";
+		//echo $rr." ";
+		$onlyName = false;
+		$polyName=$rr;
+		array_push($polyNames,$rr);
 	}
   }
   //echo "<td>polyType:".$polyType."</td>";
@@ -65,7 +74,7 @@ $message="{\"polys\":{\"polyCounts\":\"".$polyCounts."\"";
 for ($i = 0; $i<$polyCounts ; $i++)	
 {	
 
-		$message=$message.",\"poly".$i."\":{\"polyType\":\"".$polytypes[$i]."\",\"points\":{";
+		$message=$message.",\"poly".$i."\":{\"polyName\":\"".$polyNames[$i]."\",\"polyType\":\"".$polytypes[$i]."\",\"points\":{";
 	
 	for ($j = 0; $j<$polytypes[$i]*2 ; )
 	{

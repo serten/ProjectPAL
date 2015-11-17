@@ -23,11 +23,14 @@
         <item># Total Zones: 0</item>
         <item>Show All Friends</item>
         <item>Select A Friend</item>
-        <item>Normal View</item>
-        <item>Satellite View</item>
-        <item>Terrain View</item>
+        <item>Select A View</item>
         <item>Take a Zone Tour</item>
+        <item>Poly Names</item>
         
     </string-array>
-
+	<string-array name="myDrop_Down_List" color="#111">
+        <item>Hold is On</item>
+        <item>Hold is Off</item>        
+    </string-array>
+    
 </resources>
