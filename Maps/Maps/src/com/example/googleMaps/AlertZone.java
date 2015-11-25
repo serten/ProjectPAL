@@ -2,11 +2,15 @@ package com.example.googleMaps;
 
 import java.io.BufferedInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -32,11 +36,21 @@ import android.app.ActionBar.OnNavigationListener;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
+import android.app.TaskStackBuilder;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.Signature;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.LightingColorFilter;
@@ -49,9 +63,11 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.MenuItemCompat.OnActionExpandListener;
@@ -60,6 +76,7 @@ import android.support.v7.internal.view.menu.MenuView.ItemView;
 import android.support.v7.widget.SearchView;
 import android.text.InputType;
 import android.text.format.DateFormat;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -80,6 +97,8 @@ import android.widget.TabHost.TabSpec;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.facebook.UiLifecycleHelper;
+import com.facebook.widget.FacebookDialog;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
@@ -112,7 +131,8 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	private final LatLng LOCATION_LA = new LatLng(34.022324, -118.282522);
 	public final static String EXTRA_MESSAGE = "com.example.MESSAGE";
 	public final static String USER_ID = "com.example.USERID";
-	String userName,userID;
+	public final static String ZOOM_ZONE = "com.example.ZOOMZONE";
+	String userName,userID,zoomZone;
 	
 	private GoogleMap map;
 	private GoogleMap map2;
@@ -146,6 +166,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	private LocationManager locationManager;
 	List<List<Marker>> markers = new ArrayList<List<Marker>>(); 
 	ArrayList<Marker> marker = new ArrayList<Marker>();
+	ArrayList<Marker> friendMarkers = new ArrayList<Marker>();
 	private int poly_num = 3;
 	private int poly_tracker = 3;
 	private boolean cirCon = false;
@@ -161,10 +182,16 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	private int dragRad = 10000;
 	private int counterWait;
 	private int circRad = 10000;
+	private double myCurrentLat = 0;
+	private double myCurrentLong = 0;
 	private boolean circleDrag = false;
+	private UiLifecycleHelper uiHelper;
+	
 	ArrayList<Polygon> polyShape = new ArrayList<Polygon>();
 	ArrayList<String> polyNames = new ArrayList<String>();
 	ArrayList<String> polyNamesTrash = new ArrayList<String>();
+	ArrayList<String> friendsInsideZonesNameList = new ArrayList<String>();
+	ArrayList<LatLng> friendsInsideZonesLocation = new ArrayList<LatLng>();
 	ArrayList<Circle> circShape = new ArrayList<Circle>();
 	ArrayList<Integer> polyType = new ArrayList<Integer>();
 	ArrayList<Integer> circType = new ArrayList<Integer>();
@@ -176,11 +203,19 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	int polyBeingShown = -1;
 	int viewBeingShown = 0;
 	MenuItem itemSel;
+
 	
 	Marker markerWithInfo;
 	Marker markerOnDrag;
 	EditText name;
 	String polyName;
+	String URL;
+	String propertyAddress;
+	String picture;
+	String description;
+	String addLink;
+	String postId;
+	String randomMove = "b";
 	
 	Activity activity;
 	Bundle info;
@@ -193,13 +228,14 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     private CharSequence mDrawerTitle;
     private CharSequence mTitle;
     private String[] mListTitles;
+    private NotificationManager mnm;
 	
     private String[] actionsForActioBar = new String[] {
             "Hold is On",
             "Hols is Off",
         };
     
-    
+    Bundle notificationBundle = null;
      
    
 	@Override
@@ -208,14 +244,43 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		
 		activity = this;
 
+		uiHelper = new UiLifecycleHelper(this, null);
+		uiHelper.onCreate(savedInstanceState);
+		
 		Log.d("Http", "1");
 
 		Intent intent = getIntent();
+		setIntent(intent);
 		userName = intent.getStringExtra(PalMenu.EXTRA_MESSAGE);
 		userID = intent.getStringExtra(PalMenu.USER_ID);
-		
-		
-			
+		/*Bundle bundle = intent.getExtras();
+        if (bundle != null) {
+            String notificationData = bundle.getString(ZOOM_ZONE);
+            //if (notificationData == null) {
+            	Toast.makeText(this, "Hello from the other side",Toast.LENGTH_SHORT).show();
+            	Log.d("My toast", "should show");
+            //}
+
+        }*/
+
+		PackageInfo info;
+        try {
+            info = getPackageManager().getPackageInfo("com.example.googleMaps",PackageManager.GET_SIGNATURES);
+            for (Signature signature : info.signatures) {
+                MessageDigest md;
+                md = MessageDigest.getInstance("SHA");
+                md.update(signature.toByteArray());
+                String something = new String(Base64.encode(md.digest(),0));
+                //String something = new String(Base64.encodeBytes(md.digest()));
+                Log.e("hash key", something);
+		    }
+	        } catch (NameNotFoundException e1) {
+	            Log.e("name not found", e1.toString());
+	        } catch (NoSuchAlgorithmException e) {
+	            Log.e("no such an algorithm", e.toString());
+	        } catch (Exception e) {
+	            Log.e("exception", e.toString());
+        }
 		
 		
 		Log.d("Http", "1.5");
@@ -250,6 +315,35 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			}
 		});
 		*/
+		
+		final TabHost tabHost = (TabHost) findViewById(R.id.tabhost);
+		tabHost.setup();
+
+		TabSpec spec2 = tabHost.newTabSpec("tab2");
+		spec2.setContent(R.id.tab2);
+		spec2.setIndicator("Edit the Zones", null);
+		tabHost.addTab(spec2);
+		
+		TabSpec spec1 = tabHost.newTabSpec("tab1");
+		spec1.setContent(R.id.tab1);
+		spec1.setIndicator("The Zones", null);
+		tabHost.addTab(spec1);
+		
+		
+		//tabHost.setCurrentTab(1);
+		
+		Handler handler1 = new Handler();
+		handler1.postDelayed(new Runnable() {			
+			public void run() {
+		     // Actions to do after 0.6 seconds
+				tabHost.setCurrentTab(1);
+				Handler handler2 = new Handler();
+				handler2.postDelayed(new Runnable() {
+					public void run() {
+					    // Actions to do after 1.2 seconds
+						tabHost.setCurrentTab(1);
+				}}, 1400);
+		    }}, 900);
 		ArrayAdapter<String> adapterForDropDown = new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_spinner_dropdown_item, actionsForActioBar);
 		
         /** Enabling dropdown list navigation for the action bar */
@@ -693,34 +787,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		eT2 = (EditText) findViewById(R.id.editText2);
 		eT3 = (EditText) findViewById(R.id.editText3);
 		
-		final TabHost tabHost = (TabHost) findViewById(R.id.tabhost);
-		tabHost.setup();
-
-		TabSpec spec2 = tabHost.newTabSpec("tab2");
-		spec2.setContent(R.id.tab2);
-		spec2.setIndicator("Edit the Zones", null);
-		tabHost.addTab(spec2);
 		
-		TabSpec spec1 = tabHost.newTabSpec("tab1");
-		spec1.setContent(R.id.tab1);
-		spec1.setIndicator("The Zones", null);
-		tabHost.addTab(spec1);
-		
-		
-		//tabHost.setCurrentTab(1);
-		
-		Handler handler1 = new Handler();
-		handler1.postDelayed(new Runnable() {			
-			public void run() {
-		     // Actions to do after 0.6 seconds
-				tabHost.setCurrentTab(1);
-				Handler handler2 = new Handler();
-				handler2.postDelayed(new Runnable() {
-					public void run() {
-					    // Actions to do after 1.2 seconds
-						tabHost.setCurrentTab(1);
-				}}, 1200);
-		    }}, 600);
 		
 		mRequestingLocationUpdates = false;
         mLastUpdateTime = "";
@@ -1315,6 +1382,8 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 					+ j
 					+ "&userID="
 					+ userID; 
+        	myCurrentLat = i;
+        	myCurrentLong = j;
 			final String Link = URL.replace(" ", "%20");
 			Log.d("Link", Link);
 			myTask = new LongLatInfo();
@@ -1540,7 +1609,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 					return options;
 					
 				} else {
-					Toast.makeText(AlertZone.this, "error",
+					Toast.makeText(AlertZone.this, "error jun",
 							Toast.LENGTH_SHORT);
 				}
 
@@ -1582,7 +1651,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 						.title(locality)
 						.anchor(0.5f, 0.5f)
 						.position(new LatLng(result.get(i).getPoints().get(j).latitude, result.get(i).getPoints().get(j).longitude))
-						.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_mapmarker)).anchor(0.5f, 0.5f).title(locality).draggable(true);
+						.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_mapmarker)).anchor(0.5f, 0.5f).draggable(true);
 						if (j==0){
 							options.icon(BitmapDescriptorFactory.fromResource(R.drawable.but_close));
 						}
@@ -1614,11 +1683,11 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 					                padding);
 					        map.moveCamera(update);
 							map2.moveCamera(update);
-							Toast.makeText(AlertZone.this, "error",
-									Toast.LENGTH_SHORT);
+							
 							
 					    }}, 500);
 				}
+				
 			}
 			
 			
@@ -1627,6 +1696,114 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		
 		
 		protected void onCancelled (ArrayList<PolygonOptions> result){
+			super.onCancelled(result);
+		}
+    }
+    
+    private class findFriendsInsideZone extends AsyncTask<String, Integer, Integer>{ // X,Y,Z
+    	
+
+
+        protected ProgressDialog progressDialog;
+
+        @Override
+        protected void onPreExecute()
+        {
+            super.onPreExecute();
+            progressDialog = ProgressDialog.show(AlertZone.this, "Loading Friends Inside Zones...", "Please wait until the retrieve is complete!", true, false);
+        }
+    	
+    	protected Integer doInBackground(String... params) { // Z,X
+    		
+    		
+    		try {
+    			String strURL="http://54.187.253.246/selectuser/alertZoneFriends.php?userID="+userID;
+    			
+				StringBuilder url = new StringBuilder(strURL);
+				HttpGet get = new HttpGet(url.toString());	
+				HttpClient client = new DefaultHttpClient();				
+				/*HttpPost post = new HttpPost(url.toString());				
+				HttpParams p=new BasicHttpParams();
+				p.setParameter("userID", userID);
+				post.setParams(p);*/
+				
+				HttpResponse r = client.execute(get);
+				
+				///////////////////////////////////////////////////////////
+				
+				/////////////////////////////////////////////////////////
+				int status = r.getStatusLine().getStatusCode();
+				String data = null;
+				JSONObject explrObject = null;
+				
+				Log.d("Error", "test0");
+				if (status == 200) {
+					HttpEntity e = r.getEntity();
+					Log.d("checkFriends", "he-1");
+					data = EntityUtils.toString(e);
+					explrObject = new JSONObject(data);
+					
+					int friendsNumber = Integer.valueOf(explrObject.getString("friendsNumber"));
+					Log.d("checkFriends", "he-2");
+					for (int i = 1; i <= friendsNumber; i++) {
+						Log.d("checkFriends", "he-3");
+						JSONObject row = new JSONObject(explrObject.getString("row"+i));
+						friendsInsideZonesNameList.add(row.getString("name"));
+						LatLng loc = new LatLng(Double.valueOf(row.getString("lat")), Double.valueOf(row.getString("long")));
+						friendsInsideZonesLocation.add(loc);
+						Log.d("checkFriends", "he-4");
+					}
+					return friendsNumber;
+					
+				} else {
+					Toast.makeText(AlertZone.this, "error jun",
+							Toast.LENGTH_SHORT);
+				}
+
+			} catch (ClientProtocolException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (JSONException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+				System.out.println(e1);
+			}
+			return 0;
+		}
+
+		protected void onPostExecute(Integer result) { // Z
+		
+			for (int i = 0; i < result; i++) {
+				Geocoder gc = new Geocoder(AlertZone.this);
+				List<Address> list = null;
+				try {
+					list = gc.getFromLocation(friendsInsideZonesLocation.get(i).latitude, friendsInsideZonesLocation.get(i).longitude, 1);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			
+				Address add = list.get(0);
+				locality = add.getLocality();
+				
+				MarkerOptions options = new MarkerOptions()
+				.title(friendsInsideZonesNameList.get(i))
+				.anchor(0.5f, 0.5f)
+				.position(friendsInsideZonesLocation.get(i))
+				.icon(BitmapDescriptorFactory.fromResource(R.drawable.frface)).anchor(0.5f, 0.5f).draggable(true);
+				
+				friendMarkers.add(map.addMarker(options));
+				//friendMarkers.add(map2.addMarker(options));
+			}
+		
+			progressDialog.dismiss();
+		}
+		
+		
+		protected void onCancelled (Integer result){
 			super.onCancelled(result);
 		}
     }
@@ -1710,7 +1887,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 					
 				} else {
 					Toast.makeText(AlertZone.this, "error",
-							Toast.LENGTH_SHORT);
+							Toast.LENGTH_SHORT).show();
 				}
 
 			} catch (ClientProtocolException e) {
@@ -1783,10 +1960,25 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     @Override
     public void onResume() {
         super.onResume();
-
+        Log.d("notification", "is clicked");
+        //bundle = getIntent().getExtras();
+        if (notificationBundle != null) {
+            String notificationData = notificationBundle.getString(ZOOM_ZONE);
+            if(notificationData!=null) {
+            	Toast.makeText(this, notificationData,Toast.LENGTH_SHORT).show();
+            	Log.d("My toast", "should show");
+            	notificationBundle = null;
+            	mnm.cancelAll();
+            	mnm = null;
+            }
+        	Log.d("Bundle", "not empty");
+        }else
+        	Log.d("Bundle", "is empty!");
+        
         if (mGoogleApiClient.isConnected() && mRequestingLocationUpdates) {
             startLocationUpdates();
         }
+        uiHelper.onResume();
     }
     
     
@@ -1847,7 +2039,10 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     @Override
     protected void onStop() {
         mGoogleApiClient.disconnect();
-        
+        if (mnm !=null){
+        	mnm.cancelAll();
+        	mnm = null;
+        }
         super.onStop();
     }
     
@@ -1861,6 +2056,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
         if (mGoogleApiClient.isConnected()) {
             stopLocationUpdates();
         }
+        uiHelper.onPause();
     }
 
  
@@ -2173,7 +2369,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 									saveShapes();
 									Log.d("dia-2", "Hello");
 									Toast.makeText(AlertZone.this,
-											"Shapes are being saved ...",
+											"Zones are being saved ...",
 											Toast.LENGTH_SHORT).show();
 								}
 							});
@@ -2246,7 +2442,10 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     	intent.putExtra(EXTRA_MESSAGE, userName);
     	intent.putExtra(USER_ID, userID);
 		startActivity(intent);
-		
+		if (mnm !=null){
+        	mnm.cancelAll();
+        	mnm = null;
+        }
 		finish();
 		//moveTaskToBack(true);
     }
@@ -2262,6 +2461,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        uiHelper.onDestroy();
     }
 
 	@Override
@@ -2292,6 +2492,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 
     private void selectItem(int position) {
 
+    	File imageFile = null;
     	switch (position){
 	    	case 0:
 	    		//Toast.makeText(this, "KS will complete it later. Not Working Now!",Toast.LENGTH_SHORT).show();
@@ -2347,7 +2548,6 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     	        Log.d("alert-p:","3");
     	        AlertDialog alert1 = builder1.create();
     	        alert1.show();
-				onClick_Norm();
 				break;
     		case 8:
     			if (counterPoly>0)
@@ -2420,13 +2620,142 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     	        alert2.show();
     	        Log.d("alert-p:","4");
     	        break;
-			default:
+    		case 10:
+    			//NotificationManager mnm =(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+    			/*Notification n = new Notification();
+    			n.icon = R.drawable.pol;
+    			n.tickerText = "Notification for text";
+    			n.when = System.currentTimeMillis();
+    			
+    			Intent MyI = new Intent(getApplicationContext(), AlertZone.class);
+    			MyI.putExtra(EXTRA_MESSAGE, userName);
+    			MyI.putExtra(USER_ID, userID);
+    			MyI.putExtra(ZOOM_ZONE, "ali");
+    			//MyI.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+    			PendingIntent MyPI = PendingIntent.getActivity(getApplicationContext(), 0, MyI, PendingIntent.FLAG_UPDATE_CURRENT);
+    			//MyI.flags |= Notification.FLAG_AUTO_CANCEL;
+    			n.setLatestEventInfo(getApplicationContext(), "Hello", "Jalal", MyPI);
+    			
+    			mnm =(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+    			mnm.notify(1,n);*/
+    			NotificationCompat.Builder mBuilder =
+    			        new NotificationCompat.Builder(this)
+    			        .setSmallIcon(R.drawable.pol)
+    			        .setContentTitle("My notification")
+    			        .setContentText("Hello World!");
+    			// Creates an explicit intent for an Activity in your app
+    			Intent resultIntent = new Intent(this, AlertZone.class);
+    			notificationBundle = new Bundle();
+    			
+    			notificationBundle.putString(ZOOM_ZONE, "ali");
+                resultIntent.putExtras(notificationBundle);
+                resultIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP |
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP);
+    			//resultIntent.putExtra(ZOOM_ZONE, "ali");
+    			// The stack builder object will contain an artificial back stack for the
+    			// started Activity.
+    			// This ensures that navigating backward from the Activity leads out of
+    			// your application to the Home screen.
+    			TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+    			// Adds the back stack for the Intent (but not the Intent itself)
+    			stackBuilder.addParentStack(AlertZone.class);
+    			// Adds the Intent that starts the Activity to the top of the stack
+    			stackBuilder.addNextIntent(resultIntent);
+    			PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0,PendingIntent.FLAG_UPDATE_CURRENT);
+    			mBuilder.setContentIntent(resultPendingIntent);
+    			mnm =(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+    			// mId allows you to update the notification later on.
+    			mnm.notify(0, mBuilder.build());
+    			break;
+    		
+    		case 11:
+    			Log.d("checkFriends", "Yes-1");
+    			for (int i = friendMarkers.size()-1; i>-1 ; i--) {
+    				friendMarkers.get(i).remove();
+				}
+				friendMarkers.clear();
+    			friendsInsideZonesNameList = new ArrayList<String>();
+    			friendsInsideZonesLocation = new ArrayList<LatLng>();
+    			
+    			new findFriendsInsideZone().execute();
+    			Log.d("checkFriends", "Yes-2");
+    			break;
+    		
+    		case 12:
+    			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    			builder.setTitle("Post to Facebook")
+    					.setCancelable(false)
+    					.setNegativeButton("Cancel",
+    							new DialogInterface.OnClickListener() {
+    								public void onClick(DialogInterface dialog,
+    										int id) {
+    									dialog.cancel();
+    									Toast.makeText(AlertZone.this,
+    											"Post Cancelled",
+    											Toast.LENGTH_SHORT).show();
+    								}
+    							})
+
+    					.setPositiveButton("Post Property Details",
+    							new DialogInterface.OnClickListener() {
+    								public void onClick(DialogInterface dialog,
+    										int id) {
+    									FacebookDialog.ShareDialogBuilder shareDialogBuilder = new FacebookDialog.ShareDialogBuilder(
+    											activity);
+    									shareDialogBuilder.setPicture("http://54.187.253.246/selectuser/fbsharepic.jpg");
+    									// shareDialogBuilder.set
+    									shareDialogBuilder.setName("Hello");// info.getString("Address"));
+    									shareDialogBuilder
+    											.setDescription("Hello from the other side");
+    									shareDialogBuilder
+    											.setCaption("By Adele");
+    									shareDialogBuilder.setLink("https://www.google.com/maps/place/@"+myCurrentLat+","+myCurrentLong+",16.75z/data=!4m2!3m1!1s0x0:0x0");
+
+    									FacebookDialog shareDialog = shareDialogBuilder
+    											.build();
+
+    									uiHelper.trackPendingDialogCall(shareDialog
+    											.present());
+
+    								}
+    							});
+    			AlertDialog alert = builder.create();
+    			alert.show();
+    			break;
+			
+    		default:
 				break;
     	}
         mDrawerList.setItemChecked(position, true);
         //setTitle(mPlanetTitles[position]);
         mDrawerLayout.closeDrawer(mDrawerList);
     }
+    
+    @Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+
+		uiHelper.onActivityResult(requestCode, resultCode, data,
+				new FacebookDialog.Callback() {
+
+					@Override
+					public void onError(FacebookDialog.PendingCall pendingCall,
+							Exception error, Bundle data) {
+						Log.e("Activity",
+								String.format("Error: %s", error.toString()));
+						Toast.makeText(activity.getApplicationContext(),
+								"Cancelled", Toast.LENGTH_SHORT).show();
+					}
+
+					@Override
+					public void onComplete(
+							FacebookDialog.PendingCall pendingCall, Bundle data) {
+
+					}
+
+				});
+	}
+    
     
     public void zoneTour(final int counterWait) {
     	Handler handler = new Handler();

@@ -50,10 +50,7 @@ public class SearchForFriends extends ListActivity {
 	@Override
 	protected void onStop() {
 	    super.onStop();  // Always call the superclass method first
-	    Intent intent = new Intent(SearchForFriends.this, ListOfFriends.class);
-		intent.putExtra(EXTRA_MESSAGE, userName);
-		intent.putExtra(USER_ID, userID);
-		startActivity(intent);
+	    
 		finish();
 	}
 	
@@ -344,7 +341,11 @@ public class SearchForFriends extends ListActivity {
 	            {
 	            	
 	            	Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
-	            	onStop();
+	            	Intent intent = new Intent(SearchForFriends.this, ListOfFriends.class);
+	        		intent.putExtra(EXTRA_MESSAGE, userName);
+	        		intent.putExtra(USER_ID, userID);
+	        		startActivity(intent);
+	            	finish();
 	            	
 	            }
 	            /** Showing a message, on completion of download process */

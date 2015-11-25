@@ -95,7 +95,8 @@ public class ListOfFriends extends ListActivity{
                 	results.putExtra(EXTRA_MESSAGE, userName);
                 	results.putExtra(USER_ID, userID);
     				startActivity(results);
-    				onPause();
+    				//onPause();
+    				finish();
                 }else{
                     Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
                 }

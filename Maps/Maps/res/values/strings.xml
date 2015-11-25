@@ -15,6 +15,7 @@
     <string name="drawer_open">Open navigation drawer</string>
     <string name="drawer_close">Close navigation drawer</string>
     <string name="action_websearch">Web search</string>
+    <string name="facebook_app_id">1663824597193548</string>
     <string-array name="myMaps_array" color="#111">
         <item>The Zones</item>
         <item>Edit The Zones</item>
@@ -26,6 +27,9 @@
         <item>Select A View</item>
         <item>Take a Zone Tour</item>
         <item>Poly Names</item>
+        <item>Picture</item>
+        <item>See Friends</item>
+        <item>Share On Facebook</item>
         
     </string-array>
 	<string-array name="myDrop_Down_List" color="#111">
