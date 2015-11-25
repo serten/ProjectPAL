@@ -73,6 +73,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
@@ -150,6 +151,8 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 	CharSequence[] friendNames;
 	CharSequence[] friendIds;
 	String followedFriendId;
+	String useOnlyRoads;
+	LatLngBounds.Builder builder;
     
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -162,7 +165,9 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 		Intent intent = getIntent();
 		userName = intent.getStringExtra(PalMenu.EXTRA_MESSAGE);
 		userID = intent.getStringExtra(PalMenu.USER_ID);
-				
+		builder = new LatLngBounds.Builder();
+		useOnlyRoads="2";
+		
 		Log.d("Http", "1.5");
 
 		Log.d("Http", "2");
@@ -323,7 +328,7 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 	private void removeEverything(){
 		
 		map.clear();
-		polyType = new ArrayList<Integer>();
+		polyType.clear();
 		
 
 	}
@@ -410,18 +415,52 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 			startPath.setText("Start Path");
 			startPath.getBackground().setColorFilter(new LightingColorFilter(0xffcccccc, 0xff000000));
 			Toast.makeText(this, "PATH SAVING ENDED...", Toast.LENGTH_LONG).show();
+			TextView pathMethod = (TextView) findViewById(R.id.followedFriend);			
+			pathMethod.setText("");
 			removeEverything();
 		}
 		else
 		{
-			pathStarted=true;
-			startPath.setText("End Path");
-			//startPath.setBackgroundColor(Color.RED);
-			int color = Color.parseColor("#AE6118"); //The color u want           
+			 AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		        builder.setTitle("Make your selection");
+		        String[] choices={"Use Roads","Free Roaming"};
+		        builder.setItems(choices, new DialogInterface.OnClickListener() {
+		            public void onClick(DialogInterface dialog, int item) {
+		            	
+		            	Button startPath = (Button) findViewById(R.id.btnStartPath);
+		            	
+		            	pathStarted=true;
+		    			
+		            	startPath.setText("End Path");
+
+		            	startPath.getBackground().setColorFilter(new LightingColorFilter(0xff000000, 0xFFAA0000));
+		            	
+		            	TextView pathMethod = (TextView) findViewById(R.id.followedFriend);
+		    			
+		            	
+		            	
+		            	if(item==0)
+		            	{
+		            		useOnlyRoads="1";
+		            		pathMethod.setText("Road-Path");			    			
+			            	pathMethod.bringToFront();
+		            	}
+		            	else if(item==1)
+		            	{
+		            		useOnlyRoads="2";
+		            		pathMethod.setText("Free Roam");			    			
+			            	pathMethod.bringToFront();
+		            	}
+		    			
+		            	//Toast.makeText(this, "PATH SAVING STARTED...", Toast.LENGTH_LONG).show();
+		            	
+		    			new polyShapeGet().execute();
+		    			
+		            }
+		        });
+		        AlertDialog alert = builder.create();
+		        alert.show();
 			
-			v.getBackground().setColorFilter(new LightingColorFilter(0xff000000, 0xFFAA0000));
-			Toast.makeText(this, "PATH SAVING STARTED...", Toast.LENGTH_LONG).show();			
-			new polyShapeGet().execute();
 		}
 
 		
@@ -491,7 +530,9 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 						+ "&long="
 						+ j
 						+ "&userID="
-						+ userID; 
+						+ userID
+						+ "&useOnlyRoads="
+						+ useOnlyRoads; 
 				final String Link = URL.replace(" ", "%20");
 				Log.d("Link", Link);
 				myTask = new LongLatInfo();
@@ -506,7 +547,7 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
         	
         	if(followingStarted||pathStarted)
         	{
-        		polyType = new ArrayList<Integer>();
+        		polyType.clear();
         		new polyShapeGet().execute();
         	}
         	
@@ -600,7 +641,8 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 				
 				if(followingStarted||pathStarted)
 				{
-					for (int i = 0; i < counterPoly; i++) {
+					for (int i = 0; i < counterPoly; i++) 
+					{
 						Log.d("polyShapeGet-2", "i="+String.valueOf(i)+" "+String.valueOf(counterPoly));
 						if(pathStarted)
 						{
@@ -652,7 +694,25 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 			                     .anchor(0.5f, 0.5f));
 								
 							}
+							
+							 builder.include(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))));
 						}
+					}
+					if(counterPoly>0)
+					{
+						if(mCurrentLocation!=null)
+						{
+							double i = (double) mCurrentLocation.getLatitude();
+				        	double j = (double) mCurrentLocation.getLongitude();
+				        	builder.include(new LatLng(i,j));
+			        	}
+						
+						LatLngBounds bounds = builder.build();
+				        int padding = 100; // offset from edges of the map
+				                                            // in pixels
+				        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
+				                padding);
+				        map.moveCamera(update);
 					}
 				}
 			} 

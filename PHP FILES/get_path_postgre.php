@@ -85,56 +85,16 @@ for ($i = 0; $i<$polyCounts ; $i++)
 }
 $message=$message."},\"circles\":{\"circCounts\":\"0\",\"circ0\":{\"centerLat\":\"0\",\"centerLong\":\"0\",\"radius\":\"0\"}}}";
 echo $message;
-
-
-//$result = pg_query($conn, "SELECT ST_AsText(geom) FROM mytable"); 
-
-//$result = pg_query($conn, "SELECT ST_X(geom), ST_Y(geom) FROM mytable");
-/*$result = pg_query($conn, "SELECT ST_AsGeoJSON(geom) FROM yourtable"); 
-if (!$result) {
-  echo "An error occurred.\n";
-  exit;
-}
-echo "<table border=\"1\"><tr>
-		<th>X:</th>
-		<th>Y:</th><tr>";
-while ($row = pg_fetch_row($result)) {
-$decodedText = html_entity_decode($row[0]);
-$r = json_decode($decodedText, true);
-
-foreach ($r["coordinates"][0] as $rr)
-
-  echo "<tr><td>".$rr[0]."</td><td>".$rr[1]."</td></tr>";
-}
-echo "</table>";
-*/
-
-
 /*
-//user table
-$stid = oci_parse($conn, 'select USERID, USERNAME,PASSWORD, LASTUPDATETIME from PALUSER');
-//$stid = oci_parse($conn, 'select PALUSER.USERNAME from PALUSER');
-oci_execute($stid);
-echo "<table border=\"1\"><tr>
-		<th>USERID:</th>
-		<th>USERNAME:</th>
-		<th>PASSWORD:</th>		
-		<th>LASTUPDATETIME:</th><tr>";
-while(($row = oci_fetch_array($stid,OCI_DEFAULT)) != false) {
-    // Use the uppercase column names for the associative array indices
-       
-			echo "<tr><td>".$row[0]."</td><td>".$row[1]."</td><td>".$row[2]."</td><td>".$row[3]."</td></tr>";
-}
-echo "</table>";
+$url = "http://maps.googleapis.com/maps/api/directions/json?origin=34.0276479374902,-118.286682197115&destination=34.0214124,-118.2843956&sensor=false";
+$obj = json_decode(file_get_contents($url), true);
+
+$bounds =  json_encode($obj['routes'][0]);
+$newbounds = json_decode($bounds,true);
+
+$newLat =$newbounds['bounds']['northeast']['lat'];
+$newLong=$newbounds['bounds']['northeast']['lng'];
 */
 
-
-/*
-INSERT INTO mytable (geom,name)VALUES ( ST_GeomFromText('POINT(167.213123 -89.131233123)', 26910),'son');
-
-INSERT INTO yourtable (geom,name)VALUES ( ST_GeomFromText('POLYGON((-71.1776585052917 42.3902909739571,-71.1776820268866 42.3903701743239,
--71.1776063012595 42.3903825660754,-71.1775826583081 42.3903033653531,-71.1776585052917 42.3902909739571))', 26910),'POLYGON');
-
-*/
 ?>
 

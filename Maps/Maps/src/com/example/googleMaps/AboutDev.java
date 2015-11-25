@@ -104,7 +104,7 @@ public class AboutDev extends Activity {
 		case R.id.myPic2:
 			Intent in1 = new Intent(
 					Intent.ACTION_VIEW,
-					Uri.parse("https://www.facebook.com/profile.php?id=705320455")); // homesetails
+					Uri.parse("https://www.linkedin.com/in/suleyman-erten-70525492")); // homesetails
 			// is
 			// result[22]
 			startActivity(in1); // Opening the addresse's website
