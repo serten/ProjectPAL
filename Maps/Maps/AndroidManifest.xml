@@ -48,7 +48,7 @@
         <activity
             android:name=".AlertZone"
             android:label="Alert Zone" 
-            android:launchMode="singleInstance">
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="com.example.googleMaps.MAIN" />
 

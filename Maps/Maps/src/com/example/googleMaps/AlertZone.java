@@ -1,3 +1,4 @@
+//works the best and correct with the notifications-9:10am with myhandler fixed 
 package com.example.googleMaps;
 
 import java.io.BufferedInputStream;
@@ -14,6 +15,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 
@@ -135,6 +137,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	public final static String EXTRA_MESSAGE = "com.example.MESSAGE";
 	public final static String USER_ID = "com.example.USERID";
 	public final static String ZOOM_ZONE = "com.example.ZOOMZONE";
+	//public final static int tInterval = 7000;
 	String userName,userID,zoomZone;
 	
 	private GoogleMap map;
@@ -180,6 +183,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	private boolean holdChange = false;
 	private boolean sendMode = false;
 	private boolean checkLinkOk = false;
+	private boolean justStartedActivityForNotifications = true;
 	private String locality = null;
 	private int dragIndex = -1;
 	private int dragRad = 10000;
@@ -245,6 +249,8 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
         };
     
     Bundle notificationBundle = null;
+    
+    Handler myHandlerForZones = new Handler();
      
    
 	@Override
@@ -1727,8 +1733,6 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     	
     	protected Integer doInBackground(String... params) { // Z,X
     		
-    		friendsNameInsideZonesListCompare = friendsNameInsideZonesList;
-			zonesNamesHaveFriendsInsideCompare = zonesNamesHaveFriendsInside;
     		try {
     			String strURL="http://54.187.253.246/selectuser/alertZoneFriends.php?userID="+userID;
     			
@@ -1748,19 +1752,26 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				int status = r.getStatusLine().getStatusCode();
 				String data = null;
 				JSONObject explrObject = null;
+				friendsNameInsideZonesListCompare = friendsNameInsideZonesList;
+				zonesNamesHaveFriendsInsideCompare = zonesNamesHaveFriendsInside;
 				Log.d("Error", "test0");
 				if (status == 200) {
 					HttpEntity e = r.getEntity();
 					data = EntityUtils.toString(e);
 					explrObject = new JSONObject(data);
 					
-					int peopleNumber = Integer.valueOf(explrObject.getString("peopleNumber"));
-					
+					int peopleInsideZoneNumber = Integer.valueOf(explrObject.getString("peopleInsideZoneNumber"));
+					int numberOfFriends = Integer.valueOf(explrObject.getString("numberOfFriends"));
+					if (justStartedActivityForNotifications){
+						//I am including the notification for the person himself too. So I add 1 to number of friends
+						//mnm = new ArrayList<NotificationManager>(numberOfFriends+1); 
+						justStartedActivityForNotifications = false;
+					}
 					friendsNameInsideZonesList = new ArrayList<String>();
 					friendsInsideZonesLocation = new ArrayList<LatLng>();
 					friendsInsideZonesUpdateTime = new ArrayList<String>();
 					zonesNamesHaveFriendsInside = new ArrayList<String>();
-					for (int i = 1; i <= peopleNumber; i++) {
+					for (int i = 1; i <= peopleInsideZoneNumber; i++) {
 						JSONObject row = new JSONObject(explrObject.getString("row"+i));
 						friendsNameInsideZonesList.add(row.getString("name"));
 						LatLng loc = new LatLng(Double.valueOf(row.getString("lat")), Double.valueOf(row.getString("long")));
@@ -1768,7 +1779,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 						friendsInsideZonesUpdateTime.add(row.getString("friendUpdateTime"));
 						zonesNamesHaveFriendsInside.add(row.getString("zoneName"));
 					}
-					return peopleNumber;
+					return peopleInsideZoneNumber;
 					
 				} else {
 					Toast.makeText(AlertZone.this, "error jun",
@@ -1822,110 +1833,129 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				}
 				//friendMarkers.add(map2.addMarker(options));
 			}
+			//in here I calculate the recent changes of friendlist, and put in recentChangesOfList
+			ArrayList<String> recentChangesOfList = new ArrayList<String>();
+			for (int i = 0; i < friendsNameInsideZonesList.size(); i++) {
+				if (!friendsNameInsideZonesListCompare.contains(friendsNameInsideZonesList.get(i)))
+					recentChangesOfList.add(friendsNameInsideZonesList.get(i));
+			}
+			Log.d("recentChangesOfList:", String.valueOf(recentChangesOfList.size()));
 			
-			if (!friendsNameInsideZonesListCompare.containsAll(friendsNameInsideZonesList) || !friendsNameInsideZonesList.containsAll(friendsNameInsideZonesListCompare)){
-				if (mnm!=null){
-					mnm.cancelAll();
-				}
+			//in here I calculate the changes of previous friendlistCompare, and put in recentChangesOfListCompare
+			ArrayList<String> recentChangesOfListCompare = new ArrayList<String>();
+			for (int i = 0; i < friendsNameInsideZonesListCompare.size(); i++) {
+				if (!friendsNameInsideZonesList.contains(friendsNameInsideZonesListCompare.get(i)))
+					recentChangesOfListCompare.add(friendsNameInsideZonesListCompare.get(i));
+			}
+			Log.d("recentChangesOfListCompare:", String.valueOf(recentChangesOfListCompare.size()));
+			
+			
+			if (recentChangesOfList.size()!=0 || recentChangesOfListCompare.size()!=0 || mnm==null){
+				Log.d("friendsNameInsideZonesList:", String.valueOf(friendsNameInsideZonesList.size()));
+				Log.d("notif-1", "1");
 				Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-				for (int i = 0; i < friendsNameInsideZonesList.size(); i++) {
-					boolean found = false;
-					for (int j = 0; j < friendsNameInsideZonesListCompare.size(); j++) {
-						if (friendsNameInsideZonesList.get(i).equals(friendsNameInsideZonesListCompare.get(j))){
-							found = true;
-							break;
-						}
-					}
-					if (!found){
-						if (zonesSelectedToShowFriendsInside.contains(zonesNamesHaveFriendsInside.get(i))){
-							NotificationCompat.Builder mBuilder =
-			    			        new NotificationCompat.Builder(activity)
-			    			        .setSmallIcon(R.drawable.pol)
-			    			        .setContentTitle("Friend has changed his Zone")
-			    			        .setContentText(friendsNameInsideZonesList.get(i) + " has moved into zone \"" + zonesNamesHaveFriendsInside.get(i) + "\"")
-			    			        .setSound(soundUri);
-							
-							
-			    			// Creates an explicit intent for an Activity in your app
-			    			Intent resultIntent = new Intent();
-			    			notificationBundle = new Bundle();
-			    			for (int j = 0; j < polyNames.size(); j++) {
-								if (polyNames.get(j).equals(zonesNamesHaveFriendsInside.get(i)))
-									notificationBundle.putString(ZOOM_ZONE,String.valueOf(j));
+				/*if (mnm!=null){
+					mnm.cancelAll();
+					mnm = null;
+				}*/
+				for (int i = 0; i < recentChangesOfList.size(); i++) {
+					Log.d("notif-1", "2");
+					if (zonesSelectedToShowFriendsInside.contains(zonesNamesHaveFriendsInside.get(friendsNameInsideZonesList.indexOf(recentChangesOfList.get(i))))){
+						Log.d("notif-1", "3");
+						for (int j = 0; j < friendsNameInsideZonesList.size(); j++) {
+							Log.d("notif-1", "4");
+							if (friendsNameInsideZonesList.get(j).equals(recentChangesOfList.get(i))){
+								
+								Log.d("notif-1", "5");
+								NotificationCompat.Builder mBuilder =
+		    			        new NotificationCompat.Builder(activity)
+		    			        .setSmallIcon(R.drawable.pol)
+		    			        .setContentTitle("Friend has changed his Zone")
+		    			        .setContentText(friendsNameInsideZonesList.get(j) + " has moved into zone \"" + zonesNamesHaveFriendsInside.get(j) + "\"")
+		    			        .setSound(soundUri);
+								Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), soundUri);
+							    r.play();
+						
+				    			// Creates an explicit intent for an Activity in your app
+				    			Intent resultIntent = new Intent();
+				    			notificationBundle = new Bundle();
+				    			for (int k = 0; k < polyNames.size(); k++) {
+									if (polyNames.get(k).equals(zonesNamesHaveFriendsInside.get(j)))
+										notificationBundle.putString(ZOOM_ZONE,String.valueOf(k));
+								}
+				    			notificationBundle.putString(USER_ID, userID);
+				    			notificationBundle.putString(EXTRA_MESSAGE, userName);
+				    			
+				    			resultIntent.putExtras(notificationBundle);
+				                resultIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+				    			//resultIntent.putExtra(ZOOM_ZONE, "ali");
+				    			// The stack builder object will contain an artificial back stack for the
+				    			// started Activity.
+				    			// This ensures that navigating backward from the Activity leads out of
+				    			// your application to the Home screen.
+				    			TaskStackBuilder stackBuilder = TaskStackBuilder.create(activity);
+				    			// Adds the back stack for the Intent (but not the Intent itself)
+				    			stackBuilder.addParentStack(AlertZone.class);
+				    			// Adds the Intent that starts the Activity to the top of the stack
+				    			stackBuilder.addNextIntent(resultIntent);
+				    			PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0,PendingIntent.FLAG_UPDATE_CURRENT);
+				    			mBuilder.setContentIntent(resultPendingIntent);
+				    			mnm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+				    			// mId allows you to update the notification later on.
+				    			mnm.notify(new Random().nextInt(10000), mBuilder.build());
+				    			j = friendsNameInsideZonesList.size();
 							}
-			    			notificationBundle.putString(USER_ID, userID);
-			    			notificationBundle.putString(EXTRA_MESSAGE, userName);
-			    			
-			    			resultIntent.putExtras(notificationBundle);
-			                resultIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-			    			//resultIntent.putExtra(ZOOM_ZONE, "ali");
-			    			// The stack builder object will contain an artificial back stack for the
-			    			// started Activity.
-			    			// This ensures that navigating backward from the Activity leads out of
-			    			// your application to the Home screen.
-			    			TaskStackBuilder stackBuilder = TaskStackBuilder.create(activity);
-			    			// Adds the back stack for the Intent (but not the Intent itself)
-			    			stackBuilder.addParentStack(AlertZone.class);
-			    			// Adds the Intent that starts the Activity to the top of the stack
-			    			stackBuilder.addNextIntent(resultIntent);
-			    			PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0,PendingIntent.FLAG_UPDATE_CURRENT);
-			    			mBuilder.setContentIntent(resultPendingIntent);
-			    			mnm =(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-			    			// mId allows you to update the notification later on.
-			    			mnm.notify(new Random().nextInt(10000), mBuilder.build());
 						}
 					}
-
 				}
 				
-				for (int i = 0; i < friendsNameInsideZonesListCompare.size(); i++) {
-					boolean found = false;
-					for (int j = 0; j < friendsNameInsideZonesList.size(); j++) {
-						if (friendsNameInsideZonesListCompare.get(i).equals(friendsNameInsideZonesList.get(j))){
-							found = true;
-						}
-					}
-					if (!found){
-						if (zonesSelectedToShowFriendsInside.contains(zonesNamesHaveFriendsInsideCompare.get(i))){
-							NotificationCompat.Builder mBuilder =
-			    			        new NotificationCompat.Builder(activity)
-			    			        .setSmallIcon(R.drawable.pol)
-			    			        .setContentTitle("Friend has changed his Zone")
-			    			        .setContentText(friendsNameInsideZonesListCompare.get(i) + " has moved out of zone \"" + zonesNamesHaveFriendsInsideCompare.get(i) + "\"")
-			    			        .setSound(soundUri);
-							/*Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), soundUri);
-			    			r.play();*/
-			    			// Creates an explicit intent for an Activity in your app
-			    			Intent resultIntent = new Intent();
-			    			notificationBundle = new Bundle();
-			    			for (int j = 0; j < polyNames.size(); j++) {
-								if (polyNames.get(j).equals(zonesNamesHaveFriendsInsideCompare.get(i))){
-									notificationBundle.putString(ZOOM_ZONE,String.valueOf(j));
-									break;
+				Log.d("friendsNameInsideZonesListCompare:", String.valueOf(friendsNameInsideZonesListCompare.size()));
+				Log.d("notif-2", "1");
+				for (int i = 0; i < recentChangesOfListCompare.size(); i++) {
+					Log.d("notif-2", "2");
+					if (zonesSelectedToShowFriendsInside.contains(zonesNamesHaveFriendsInsideCompare.get(friendsNameInsideZonesListCompare.indexOf(recentChangesOfListCompare.get(i))))){
+						Log.d("notif-2", "3");
+						for (int j = 0; j < friendsNameInsideZonesListCompare.size(); j++) {
+							Log.d("notif-2", "4");
+							if (friendsNameInsideZonesListCompare.get(j).equals(recentChangesOfListCompare.get(i))){								
+								Log.d("notif-2", "5");
+								NotificationCompat.Builder mBuilder =
+		    			        new NotificationCompat.Builder(activity)
+		    			        .setSmallIcon(R.drawable.pol)
+		    			        .setContentTitle("Friend has changed his Zone")
+		    			        .setContentText(friendsNameInsideZonesListCompare.get(j) + " has moved out of zone \"" + zonesNamesHaveFriendsInsideCompare.get(j) + "\"")
+								.setSound(soundUri);
+								Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), soundUri);
+							    r.play();
+				    			// Creates an explicit intent for an Activity in your app
+				    			Intent resultIntent = new Intent();
+				    			notificationBundle = new Bundle();
+				    			for (int k = 0; k < polyNames.size(); k++) {
+									if (polyNames.get(k).equals(zonesNamesHaveFriendsInsideCompare.get(j)))
+										notificationBundle.putString(ZOOM_ZONE,String.valueOf(k));
 								}
+				    			notificationBundle.putString(USER_ID, userID);
+				    			notificationBundle.putString(EXTRA_MESSAGE, userName);
+				    			
+				    			resultIntent.putExtras(notificationBundle);
+				                resultIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+				    			//resultIntent.putExtra(ZOOM_ZONE, "ali");
+				    			// The stack builder object will contain an artificial back stack for the
+				    			// started Activity.
+				    			// This ensures that navigating backward from the Activity leads out of
+				    			// your application to the Home screen.
+				    			TaskStackBuilder stackBuilder = TaskStackBuilder.create(activity);
+				    			// Adds the back stack for the Intent (but not the Intent itself)
+				    			stackBuilder.addParentStack(AlertZone.class);
+				    			// Adds the Intent that starts the Activity to the top of the stack
+				    			stackBuilder.addNextIntent(resultIntent);
+				    			PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0,PendingIntent.FLAG_UPDATE_CURRENT);
+				    			mBuilder.setContentIntent(resultPendingIntent);
+				    			mnm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+				    			// mId allows you to update the notification later on.
+				    			mnm.notify(new Random().nextInt(10000), mBuilder.build());
+				    			j = friendsNameInsideZonesListCompare.size();
 							}
-			    			//notificationBundle.putString(ZOOM_ZONE, String.valueOf(j));
-			                
-			                notificationBundle.putString(USER_ID, userID);
-			    			notificationBundle.putString(EXTRA_MESSAGE, userName);
-			    			
-			    			resultIntent.putExtras(notificationBundle);
-			                resultIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-			    			//resultIntent.putExtra(ZOOM_ZONE, "ali");
-			    			// The stack builder object will contain an artificial back stack for the
-			    			// started Activity.
-			    			// This ensures that navigating backward from the Activity leads out of
-			    			// your application to the Home screen.
-			    			TaskStackBuilder stackBuilder = TaskStackBuilder.create(activity);
-			    			// Adds the back stack for the Intent (but not the Intent itself)
-			    			stackBuilder.addParentStack(AlertZone.class);
-			    			// Adds the Intent that starts the Activity to the top of the stack
-			    			stackBuilder.addNextIntent(resultIntent);
-			    			PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0,PendingIntent.FLAG_UPDATE_CURRENT);
-			    			mBuilder.setContentIntent(resultPendingIntent);
-			    			mnm =(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-			    			// mId allows you to update the notification later on.
-			    			mnm.notify(new Random().nextInt(10000), mBuilder.build());
 						}
 					}
 				}
@@ -2113,7 +2143,8 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				map2.animateCamera(update);
             	Log.d("My toast", "should show");
             	notificationBundle = null;
-            	mnm.cancelAll();
+            	if(mnm!=null)
+            		mnm.cancelAll();
             	//mnm = null;
             }
         	Log.d("Bundle", "not empty");
@@ -2146,7 +2177,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
         }
         
         if (locationManager != null){
-        	locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 7000, 0, this);
+        	locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1800, 0, this);
         }
         	
         if (mRequestingLocationUpdates) {
@@ -2184,10 +2215,9 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     @Override
     protected void onStop() {
         mGoogleApiClient.disconnect();
-        if (mnm !=null){
-        	mnm.cancelAll();
-        	mnm = null;
-        }
+        myHandlerForZones.removeCallbacksAndMessages(null);
+        if(mnm!=null)
+    		mnm.cancelAll();
         super.onStop();
     }
     
@@ -2587,10 +2617,9 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     	intent.putExtra(EXTRA_MESSAGE, userName);
     	intent.putExtra(USER_ID, userID);
 		startActivity(intent);
-		if (mnm !=null){
-        	mnm.cancelAll();
-        	mnm = null;
-        }
+		myHandlerForZones.removeCallbacksAndMessages(null);
+		if(mnm!=null)
+    		mnm.cancelAll();
 		finish();
 		//moveTaskToBack(true);
     }
@@ -2899,6 +2928,8 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     			zonesNamesHaveFriendsInside = new ArrayList<String>();
     			zonesNamesHaveFriendsInsideCompare = new ArrayList<String>();
     			zonesSelectedToShowFriendsInside = new ArrayList<String>();
+    			justStartedActivityForNotifications = true;
+    			myHandlerForZones.removeCallbacksAndMessages(null);
     			
     			final String[] multiItems = new String[counterPoly];
     			//final CharSequence myList[] = { "Tea", "Coffee", "Milk" };
@@ -2914,13 +2945,19 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     	        builder3.setMultiChoiceItems(multiItems, null,
     	        	    new DialogInterface.OnMultiChoiceClickListener() {
     	        	    public void onClick(DialogInterface dialog, int item, boolean isChecked) {
-    	        	        if(isChecked){
-    	        	             // If user select a item then add it in selected items
+    	        	    	Log.d("Item:",String.valueOf(item));
+    	        	        if(isChecked){ // If user select a item then add it in selected items
+    	        	        	Log.d("multiSel:","1");
     	        	             selList.add(item);
-    	        	         }else if (selList.contains(item)){
-    	        	             // if the item is already selected then remove it
-    	        	             selList.remove(item);
-    	        	     }}
+    	        	             Log.d("multiSel:","2");
+    	        	         }else
+    	        	        	 for (int i = selList.size()-1; i >-1; i--) {
+    	        	        		 if (selList.get(i)==item){
+    	        	        			 selList.remove(i);
+    	        	        			 break;
+    	        	        		 }
+    	        	        	 }	
+    	        	    }
     	       }).setCancelable(true)
     	       .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
 				   @Override
@@ -2933,6 +2970,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	           .setPositiveButton("OK", new DialogInterface.OnClickListener() {
 	               @Override
 	               public void onClick(DialogInterface dialog, int id) {
+	            	   
 	            	   for (int i = 0; i < selList.size(); i++) {
 	            		   	oneItem = multiItems[selList.get(i)];
 	            		   	if (i==selList.size()-1)
@@ -3007,27 +3045,25 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     private void zoneSelection(boolean b) {
     	zonesSelectedToShowFriendsInside.add(oneItem);
     	Log.d("zoneNamesselected-1",zonesSelectedToShowFriendsInside.get(0));
+    	myHandlerForZones.removeCallbacksAndMessages(null);
     	if (b){
     		zoneSelectionAsync(0);
     	}
     }
     
-    private void zoneSelectionAsync(int time) {
+    private void zoneSelectionAsync(final int time) {
     	
 		//zonesSelectedToShowFriendsInside = new ArrayList<String>();
     	//Log.d("zoneNamesselected-1",zonesSelectedToShowFriendsInside.get(0));
-    	Handler handler = new Handler();
-    	
-    	handler.postDelayed(new Runnable() {			
+    	myHandlerForZones.postDelayed(new Runnable() {			
 			public void run() {
 		     // Actions to do after 0.5 seconds
 				if (!myTask.isCancelled()){
 					new findFriendsInsideZone().execute();
 				}
-		    }}, 5000*(time));
-    	
-    	if (time<500 && !myTask.isCancelled())
-    		zoneSelectionAsync(time+1);
+				if (time<500 && !myTask.isCancelled())
+		    		zoneSelectionAsync(time+1);
+		    }}, 1000*(time));
     }
     
     @Override
