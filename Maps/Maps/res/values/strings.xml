@@ -3,7 +3,6 @@
 
     <string name="app_name">Pal Hunter</string>
     <string name="hello_world">Hello world!</string>
-    <string name="aboutme">Heyyyy, I am Kevin Noury, a Phd student of mechanical engineering and also I am studying in computer science master\'s program at USC. I like to develop apps that have practical uses for people. This app helps you take a look at the addressee\'s house and evaluate the property\'s real estate features. I hope you enjoy using this app.</string>
     <string name="action_settings">Settings</string>
     <string name="map_info">Map information</string>
     <string name="str_btn_download">Login</string>
@@ -17,7 +16,7 @@
     <string name="action_websearch">Web search</string>
     <string name="facebook_app_id">1663824597193548</string>
     <string-array name="myMaps_array" color="#111">
-        <item># Total Zones: 0</item>
+        <item># Total Zones: </item>
         <item>Select A View</item>
         <item>Take a Zone Tour</item>
         <item>Go to a Zone</item>

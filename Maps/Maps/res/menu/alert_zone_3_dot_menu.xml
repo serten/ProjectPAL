@@ -36,7 +36,7 @@
         <item
             android:id="@+id/map6"
             android:title="6"/>
-        <item
+        <!-- <item
             android:id="@+id/circle"
             android:title="Circle">
             <menu android:checkableBehavior="single" >
@@ -61,7 +61,7 @@
                         android:title="40000"/>
                 </group>
             </menu>
-        </item>
+        </item> -->
     </group>
 
 </menu>

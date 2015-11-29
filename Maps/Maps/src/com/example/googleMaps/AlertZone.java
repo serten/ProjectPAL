@@ -257,6 +257,9 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     private ArrayList<String> nameOfAllFriends = new ArrayList<String>();
     Marker oneFriendMarker;
     ArrayList<Marker> kNNFriendsMarkers = new ArrayList<Marker>();
+    ArrayList<Marker> distFriendsMarkers = new ArrayList<Marker>();
+    
+    Circle myBlinkingCirc;
    
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -943,10 +946,9 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			if (marker.size()!=0 && counterCirc!=0 && marker.get(counterCirc-1)!= null){
 				removeEverything();
 			}
-			//circ_tracker = cirCon;
-			options.icon(BitmapDescriptorFactory.fromResource(R.drawable.but_close)).anchor(0.5f, 0.5f).title(locality);
-			marker.add(map2.addMarker(options));
-			drawCircle(marker.get(counterCirc).getPosition());
+			//previously active: options.icon(BitmapDescriptorFactory.fromResource(R.drawable.but_close)).anchor(0.5f, 0.5f).title(locality);
+			//previously active: marker.add(map2.addMarker(options));
+			//previously active: drawCircle(marker.get(counterCirc).getPosition());
 		}
 	}
 
@@ -1128,22 +1130,54 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	
 	
 
-	private void drawCircle(LatLng ll) {
+	private void drawCircle(final LatLng ll,int time, final int colorType) {
 		// TODO Auto-generated method stub
-		CircleOptions options = null;
-		if (!onDrag){
-			circType.add(circRad);
-			options = new CircleOptions()
-			.center(ll)
-			.radius(circRad)
-			.fillColor(0x66ff0000)
-			.strokeColor(Color.CYAN)
-			.strokeWidth(3);
-			circShape.add(map2.addCircle(options));
-			counterCirc ++;
-		}else{
+		if (colorType==0){  //previously if(!onDrag){
+			//circType.add(circRad);
+			
+			Handler handler = new Handler();
+			handler.postDelayed(new Runnable() {			
+				public void run() {
+			     // Actions to do after 0.5 seconds
+					if (myBlinkingCirc!=null){
+						myBlinkingCirc.remove();
+					}
+					CircleOptions options = null;
+					options = new CircleOptions()
+					.center(ll)
+					.radius(circRad)
+					.fillColor(0x66ff0000)
+					.strokeColor(Color.CYAN)
+					.strokeWidth(2);
+					myBlinkingCirc = map.addCircle(options);
+			    }}, time+500);
+			//circShape.add(map2.addCircle(options));
+			//counterCirc ++;
+		} else {  //previously if(!onDrag){
+			//circType.add(circRad);
+			
+			Handler handler = new Handler();
+			handler.postDelayed(new Runnable() {			
+				public void run() {
+			     // Actions to do after 0.5 seconds
+					if (myBlinkingCirc!=null){
+						myBlinkingCirc.remove();
+					}
+					/*CircleOptions options = null;
+					options = new CircleOptions()
+					.center(ll)
+					.radius(circRad)
+					.fillColor(0xd2b48c00)
+					.strokeColor(Color.GRAY)
+					.strokeWidth(3);
+					myBlinkingCirc = map.addCircle(options);*/
+			    }}, time+500);
+			//circShape.add(map2.addCircle(options));
+			//counterCirc ++;
+		}/*previously active: else{
 				circShape = new ArrayList<Circle>();
 				for (int j = 0; j < counterCirc; j++) {
+					CircleOptions options = null;
 					options = new CircleOptions()
 					.center(marker.get(j).getPosition())
 					.radius(circRad)
@@ -1152,8 +1186,13 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 					.strokeColor(Color.CYAN);
 					circShape.add(map2.addCircle(options));
 				}
-		}	
-		onDrag = false;
+		}*/	
+		if (time<3000 && !myTask.isCancelled() && colorType == 0)
+			drawCircle(ll,time+500,1);
+		else if (time<3000 && !myTask.isCancelled() && colorType == 1){
+			drawCircle(ll,time+500,0);
+		}
+		//onDrag = false;
 	}
 	
 	
@@ -1485,10 +1524,11 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		@Override
 		protected ArrayList<ArrayList<String>> doInBackground(String... arg0) { // Z,X
 			// TODO Auto-generated method stub
-
+			
+			ArrayList<ArrayList<String>> distFriends = new ArrayList<ArrayList<String>>();
+			ArrayList<String> oneRow;
     		try {
-    			//distance can not be resolved as string to integer because it includes "m" or "Km" characters
-    			//we need to get rid of that part, Suleyman 
+    			//distance can not directly be resolved to integer because it includes "m" or "Km" characters we need to get rid of that part.
     			int d=arg0[0].length();
     			String n=null;
     			if (arg0[0].contains("Km"))
@@ -1513,7 +1553,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				post.setParams(p);*/
 				
 				HttpResponse r = client.execute(get);
-				ArrayList<ArrayList<String>> knnFriends = new ArrayList<ArrayList<String>>();
+				
 				///////////////////////////////////////////////////////////
 				
 				/////////////////////////////////////////////////////////
@@ -1522,19 +1562,25 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				JSONObject explrObject = null;
 				Log.d("Error", "test0");
 
+				
+				
 				if (status == 200) {
 					HttpEntity e = r.getEntity();				
 					data = EntityUtils.toString(e);
+					
 					if(data.contains("An error occurred"))
 					{
-						return null;
+						oneRow = new ArrayList<String>();
+						oneRow.add(arg0[0]);
+						distFriends.add(oneRow);					
+						return distFriends;
 					}
 					else
 					{
 						explrObject = new JSONObject(data);
 	
 						int numberOfFriendsReturned = Integer.valueOf(explrObject.getString("numberOfFriendsReturned"));
-						ArrayList<String> oneRow;
+						
 						for (int i = 1; i <= numberOfFriendsReturned; i++) {
 							oneRow = new ArrayList<String>();
 							oneRow.add(explrObject.getString("name"+String.valueOf(i)));
@@ -1542,13 +1588,11 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 							oneRow.add(explrObject.getString("long"+String.valueOf(i)));
 							oneRow.add(explrObject.getString("friendUpdateTime"+String.valueOf(i)));
 							
-							knnFriends.add(oneRow);
+							distFriends.add(oneRow);
 						}
-						oneRow = new ArrayList<String>();
-						oneRow.add(arg0[0]);
-						knnFriends.add(oneRow);					
-						return knnFriends;
+						
 					}
+					
 					
 				} else {
 					Toast.makeText(AlertZone.this, "Error Occured",
@@ -1566,16 +1610,23 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				e1.printStackTrace();
 				System.out.println(e1);
 			}
-			return null;
+    		oneRow = new ArrayList<String>();
+			oneRow.add(arg0[0]);
+			distFriends.add(oneRow);					
+			return distFriends;
 		}
 		
 		
 		protected void onPostExecute(ArrayList<ArrayList<String>> result) { // Z
-			if(result!=null)
+			if(result.size()!=1)
 			{
-				if (Integer.valueOf(result.get(result.size()-1).get(0))>result.size())
+				if (Double.valueOf(result.get(result.size()-1).get(0))<4000)
 					Toast.makeText(AlertZone.this,
-							"Ooops, there are only \""+String.valueOf(result.size()-1)+"\" friends available.",
+							"There are \""+String.valueOf(result.size()-1)+"\" friends available within "+result.get(result.size()-1).get(0)+"m distance.",
+							Toast.LENGTH_SHORT).show();
+				else
+					Toast.makeText(AlertZone.this,
+							"There are \""+String.valueOf(result.size()-1)+"\" friends available within "+String.valueOf(Integer.valueOf(result.get(result.size()-1).get(0))/1000)+"Km distance.",
 							Toast.LENGTH_SHORT).show();
 				for (int i = 0; i < result.size()-1; i++) {
 					
@@ -1585,38 +1636,38 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 					String lastTime = result.get(i).get(3);
 					Log.d("Error-ins-f", "4");
 					LatLng ll = new LatLng(lat, lng);
-					String nameOfKFriend = result.get(i).get(0);
+					String nameOfDistFriend = result.get(i).get(0);
 					
 					MarkerOptions options = new MarkerOptions()
-					.title(nameOfKFriend+" is "+String.valueOf(i))
+					.title(nameOfDistFriend)
 					.anchor(0.5f, 0.5f)
 					.snippet(lastTime)
 					.position(ll)
 					.icon(BitmapDescriptorFactory.fromResource(R.drawable.friendthumb)).anchor(0.5f, 0.5f).draggable(false);
 				
-					kNNFriendsMarkers.add(map.addMarker(options));
+					distFriendsMarkers.add(map.addMarker(options));
 				}
-				
-				LatLngBounds.Builder builder = new LatLngBounds.Builder();
-				for (Marker m : kNNFriendsMarkers) {
-		            builder.include(m.getPosition());
-		        }
-			
-		        if (kNNFriendsMarkers.size()!=0){
-					LatLngBounds bounds = builder.build();
-			        int padding = 25; // offset from edges of the map
-			                                            // in pixels
-			        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
-			                padding);
-			        map.moveCamera(update);
-					map2.moveCamera(update);
-		        }
 			}
 			else
 			{
 				Toast.makeText(AlertZone.this,
-						"Ooops, There is no friend available.",Toast.LENGTH_SHORT).show();			
+						"Ooops, There is no friends available within the distance.",Toast.LENGTH_SHORT).show();			
 			}
+			
+			drawCircle(new LatLng(myCurrentLat, myCurrentLong),0,0);//arguments: drawCircle(center,,time,color)
+			
+			double[] realDistance = {10,50,100,250,500,1000,2500,5000,10000,50000,100000,1000000,3000000,15000000};
+	        int[] zoomLevel = {21,19,18,16,15,14,13,12,11,9,8,4,2,1};
+	        for (int i = 0; i < realDistance.length; i++) {
+	        	if (Double.valueOf(result.get(result.size()-1).get(0))==realDistance[i]){
+	        		CameraUpdate update = CameraUpdateFactory.newLatLngZoom(new LatLng(myCurrentLat, myCurrentLong),
+	    	                zoomLevel[i]);
+	    	        map.animateCamera(update);
+	    			map2.animateCamera(update);
+	        	}
+			}
+	        
+	        
 		}
 
 		protected void onCancelled (ArrayList<ArrayList<String>> result){
@@ -1737,8 +1788,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 					return putTo;
 					
 				} else {
-					Toast.makeText(AlertZone.this, "Sorry, couldn't locate your friend!",
-							Toast.LENGTH_SHORT).show();
+					return null;
 				}
 
 			} catch (ClientProtocolException e) {
@@ -1758,41 +1808,53 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		
 		protected void onPostExecute(String[] result) { // Z
 
-			Log.d("Error-ins-f", "2");					
-			double lat = Double.valueOf(result[0]);
-			double lng = Double.valueOf(result[1]);
-			Log.d("Error-ins-f", "3");					
-			String lastTime = result[2];
-			Log.d("Error-ins-f", "4");
-			LatLng ll = new LatLng(lat, lng);
-			CameraUpdate update = CameraUpdateFactory.newLatLngZoom(ll, 18);
-			map2.animateCamera(update);
-			map.animateCamera(update);
-			Geocoder gc = new Geocoder(AlertZone.this);
-			List<Address> list = null;
-			try {
-				list = gc.getFromLocation(lat, lng, 1);
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-		
-			Address add = list.get(0);
-			locality = add.getLocality();
-			Log.d("locality-friend:", locality);					
-			MarkerOptions options = new MarkerOptions()
-			.title(locality)
-			.anchor(0.5f, 0.5f)
-			.snippet(lastTime)
-			.position(ll)
-			.icon(BitmapDescriptorFactory.fromResource(R.drawable.friendthumb)).anchor(0.5f, 0.5f).draggable(false);
+			if (result!=null){
+				Log.d("Error-ins-f", "2");					
+				double lat = Double.valueOf(result[0]);
+				double lng = Double.valueOf(result[1]);
+				Log.d("Error-ins-f", "3");					
+				String lastTime = result[2];
+				Log.d("Error-ins-f", "4");
+				LatLng ll = new LatLng(lat, lng);
+				LatLngBounds.Builder builder = new LatLngBounds.Builder();
+				builder.include(ll);
+	            builder.include(new LatLng(myCurrentLat, myCurrentLong));
+	            
+				LatLngBounds bounds = builder.build();
+		        int padding = 25; // offset from edges of the map
+		                                            // in pixels
+		        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
+		                padding);
+				map2.animateCamera(update);
+				map.animateCamera(update);
+				Geocoder gc = new Geocoder(AlertZone.this);
+				List<Address> list = null;
+				try {
+					list = gc.getFromLocation(lat, lng, 1);
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			
-			Toast.makeText(AlertZone.this, lastTime,
-					Toast.LENGTH_LONG).show();
-			oneFriendMarker = map.addMarker(options);
-			
-			blinkLight(0,options);			
+				Address add = list.get(0);
+				locality = add.getLocality();
+				Log.d("locality-friend:", locality);					
+				MarkerOptions options = new MarkerOptions()
+				.title(locality)
+				.anchor(0.5f, 0.5f)
+				.snippet(lastTime)
+				.position(ll)
+				.icon(BitmapDescriptorFactory.fromResource(R.drawable.friendthumb)).anchor(0.5f, 0.5f).draggable(false);
+				
+				Toast.makeText(AlertZone.this, "Last Update:\n  "+ lastTime,
+						Toast.LENGTH_LONG).show();
+				oneFriendMarker = map.addMarker(options);
+				
+				blinkLight(0,options);			
 
+			}else 
+				Toast.makeText(AlertZone.this, "Sorry, couldn't locate your friend!",
+						Toast.LENGTH_SHORT).show();
 		}
 
 		protected void onCancelled (String[] result){
@@ -1846,7 +1908,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 
 		@Override
 		protected ArrayList<ArrayList<String>> doInBackground(String... arg0) { // Z,X
-			// TODO Auto-generated method stub
+			// TODO Auto-generated method stub.
 
     		try {
     			String strURL="http://54.187.253.246/selectuser/kNN_alertZone.php?userID="+userID+"&kFriends="+arg0[0];
@@ -1949,16 +2011,15 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				for (Marker m : kNNFriendsMarkers) {
 		            builder.include(m.getPosition());
 		        }
-			
-		        if (kNNFriendsMarkers.size()!=0){
-					LatLngBounds bounds = builder.build();
-			        int padding = 25; // offset from edges of the map
-			                                            // in pixels
-			        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
-			                padding);
-			        map.moveCamera(update);
-					map2.moveCamera(update);
-		        }
+				builder.include(new LatLng(myCurrentLat, myCurrentLong));
+				LatLngBounds bounds = builder.build();
+		        int padding = 25; // offset from edges of the map
+		                                            // in pixels
+		        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
+		                padding);
+		        map.moveCamera(update);
+				map2.moveCamera(update);
+	    
 			}
 			else
 			{
@@ -3155,7 +3216,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			item.setChecked(true);
 			cirCon = false;
 			break;
-		case R.id.circle:
+/*		case R.id.circle:
 			item.setChecked(true);
 			cirCon = true;
 			break;
@@ -3178,7 +3239,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			item.setChecked(true);
 			circRad = 40000;
 			cirCon = true;
-			break;
+			break;*/
 		
 		default:
 			break;
@@ -3248,13 +3309,18 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     		kNNFriendsMarkers.get(i).remove();
 		}
     	kNNFriendsMarkers = new ArrayList<Marker>();
-    	
+    	for (int i = distFriendsMarkers.size()-1; i >-1; i--) {
+    		distFriendsMarkers.get(i).remove();
+		}
+    	distFriendsMarkers = new ArrayList<Marker>();
+    	if (myBlinkingCirc!=null)
+    		myBlinkingCirc.remove();
     	
 
     	File imageFile = null;
     	switch (position){
 	    	case 0:
-	    		//Toast.makeText(this, "KS will complete it later. Not Working Now!",Toast.LENGTH_SHORT).show();
+	    		//Toast.makeText(this, "You have "+String.valueOf(counterPoly)+" defined zones.",Toast.LENGTH_SHORT).show();
 	    		break;
     		/*case 1:
     			Toast.makeText(this, "KS will complete it later. Not Working Now!",Toast.LENGTH_SHORT).show();
@@ -3278,9 +3344,9 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     	        builder5.setItems(knnNumberFriend, new DialogInterface.OnClickListener() {
     	            public void onClick(DialogInterface dialog, int kOfNN) {
     	            	//friendBeingShown = friend;
-    	            	Toast.makeText(AlertZone.this,
+    	            	/*Toast.makeText(AlertZone.this,
 								"The "+knnNumberFriend[kOfNN]+ " NNs are being shown...",
-								Toast.LENGTH_SHORT).show();
+								Toast.LENGTH_SHORT).show();*/
     	            	new findKNNFriendsAsync().execute(knnNumberFriend[kOfNN]);
     	            }
     	        }).setCancelable(false)
@@ -3464,126 +3530,6 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     	        alert2.show();
     	        Log.d("alert-p:","4");
     	        break;
-    		//case 10:
-    			//NotificationManager mnm =(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-    			/*Notification n = new Notification();
-    			n.icon = R.drawable.pol;
-    			n.tickerText = "Notification for text";
-    			n.when = System.currentTimeMillis();
-    			
-    			Intent MyI = new Intent(getApplicationContext(), AlertZone.class);
-    			MyI.putExtra(EXTRA_MESSAGE, userName);
-    			MyI.putExtra(USER_ID, userID);
-    			MyI.putExtra(ZOOM_ZONE, "ali");
-    			//MyI.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-    			PendingIntent MyPI = PendingIntent.getActivity(getApplicationContext(), 0, MyI, PendingIntent.FLAG_UPDATE_CURRENT);
-    			//MyI.flags |= Notification.FLAG_AUTO_CANCEL;
-    			n.setLatestEventInfo(getApplicationContext(), "Hello", "Jalal", MyPI);
-    			
-    			mnm =(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-    			mnm.notify(1,n); very old version which is deprecated*/
-    			
-    			/* newer version but I use this inside one of the asynctasks 
-    			 * if (friendsNameInsideZonesListCompare != friendsNameInsideZonesList)
-    				for (int i = 0; i < friendsNameInsideZonesListCompare.size(); i++) {
-    					boolean found = false;
-    					for (int j = 0; j < friendsNameInsideZonesList.size(); j++) {
-    						if (friendsNameInsideZonesListCompare.get(i) == friendsNameInsideZonesList.get(j)){
-    							found = true;
-    							if (zonesNamesHaveFriendsInsideCompare.get(i)!=zonesNamesHaveFriendsInside.get(j)){
-    								NotificationCompat.Builder mBuilder =
-    				    			        new NotificationCompat.Builder(this)
-    				    			        .setSmallIcon(R.drawable.pol)
-    				    			        .setContentTitle("Friend has changed his Zone")
-    				    			        .setContentText(friendsNameInsideZonesList.get(j) + " has moved to zone: " + zonesNamesHaveFriendsInside.get(j));
-    				    			// Creates an explicit intent for an Activity in your app
-    				    			Intent resultIntent = new Intent(this, AlertZone.class);
-    				    			notificationBundle = new Bundle();
-    				    			
-    				    			//notificationBundle.putString(ZOOM_ZONE, String.valueOf(j));
-    				                resultIntent.putExtras(notificationBundle);
-    				                resultIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP |
-    				                        Intent.FLAG_ACTIVITY_SINGLE_TOP);
-    				    			//resultIntent.putExtra(ZOOM_ZONE, "ali");
-    				    			// The stack builder object will contain an artificial back stack for the
-    				    			// started Activity.
-    				    			// This ensures that navigating backward from the Activity leads out of
-    				    			// your application to the Home screen.
-    				    			TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-    				    			// Adds the back stack for the Intent (but not the Intent itself)
-    				    			stackBuilder.addParentStack(AlertZone.class);
-    				    			// Adds the Intent that starts the Activity to the top of the stack
-    				    			stackBuilder.addNextIntent(resultIntent);
-    				    			PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0,PendingIntent.FLAG_UPDATE_CURRENT);
-    				    			mBuilder.setContentIntent(resultPendingIntent);
-    				    			mnm =(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-    				    			// mId allows you to update the notification later on.
-    				    			mnm.notify(new Random().nextInt(100000), mBuilder.build());
-    							}   								
-    						}
-						}
-    					if (!found){
-    						NotificationCompat.Builder mBuilder =
-			    			        new NotificationCompat.Builder(this)
-			    			        .setSmallIcon(R.drawable.pol)
-			    			        .setContentTitle("Friend has changed his Zone")
-			    			        .setContentText(friendsNameInsideZonesListCompare.get(i) + " has moved out of : " + zonesNamesHaveFriendsInsideCompare.get(i));
-			    			// Creates an explicit intent for an Activity in your app
-			    			Intent resultIntent = new Intent(this, AlertZone.class);
-			    			notificationBundle = new Bundle();
-			    			
-			    			//notificationBundle.putString(ZOOM_ZONE, String.valueOf(j));
-			                resultIntent.putExtras(notificationBundle);
-			                resultIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP |
-			                        Intent.FLAG_ACTIVITY_SINGLE_TOP);
-			    			//resultIntent.putExtra(ZOOM_ZONE, "ali");
-			    			// The stack builder object will contain an artificial back stack for the
-			    			// started Activity.
-			    			// This ensures that navigating backward from the Activity leads out of
-			    			// your application to the Home screen.
-			    			TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-			    			// Adds the back stack for the Intent (but not the Intent itself)
-			    			stackBuilder.addParentStack(AlertZone.class);
-			    			// Adds the Intent that starts the Activity to the top of the stack
-			    			stackBuilder.addNextIntent(resultIntent);
-			    			PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0,PendingIntent.FLAG_UPDATE_CURRENT);
-			    			mBuilder.setContentIntent(resultPendingIntent);
-			    			mnm =(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-			    			// mId allows you to update the notification later on.
-			    			mnm.notify(new Random().nextInt(100000), mBuilder.build());
-    					}
-
-					} 
-    				
-    			NotificationCompat.Builder mBuilder =
-    			        new NotificationCompat.Builder(this)
-    			        .setSmallIcon(R.drawable.pol)
-    			        .setContentTitle("My notification")
-    			        .setContentText("Hello World!");
-    			// Creates an explicit intent for an Activity in your app
-    			Intent resultIntent = new Intent(this, AlertZone.class);
-    			notificationBundle = new Bundle();
-    			
-    			notificationBundle.putString(ZOOM_ZONE, "ali");
-                resultIntent.putExtras(notificationBundle);
-                resultIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP |
-                        Intent.FLAG_ACTIVITY_SINGLE_TOP);
-    			//resultIntent.putExtra(ZOOM_ZONE, "ali");
-    			// The stack builder object will contain an artificial back stack for the
-    			// started Activity.
-    			// This ensures that navigating backward from the Activity leads out of
-    			// your application to the Home screen.
-    			TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-    			// Adds the back stack for the Intent (but not the Intent itself)
-    			stackBuilder.addParentStack(AlertZone.class);
-    			// Adds the Intent that starts the Activity to the top of the stack
-    			stackBuilder.addNextIntent(resultIntent);
-    			PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0,PendingIntent.FLAG_UPDATE_CURRENT);
-    			mBuilder.setContentIntent(resultPendingIntent);
-    			mnm =(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-    			// mId allows you to update the notification later on.
-    			mnm.notify(0, mBuilder.build());*/
-    			//break;
     		
     		case 6:
     			
@@ -3666,8 +3612,9 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				break;
     		
     		case 7:
-    			final String[] distNumberFriend = {"10m","50m","100m","250m","500m","1000m","1500m","5000m","10Km","50Km","100Km","1000Km","10000Km"};
-				
+    			circRad = 0;
+    			final String[] distance = {"10m","50m","100m","250m","500m","1000m","2500m","5000m","10Km","50Km","100Km","1000Km","3000Km","15000Km"};
+    			final int[] realDistance = {10,50,100,250,500,1000,2500,5000,10000,50000,100000,1000000,3000000,15000000};
 				/*
 				if (friendBeingShown!=-1 && friendBeingShown<findAFriend.length){
 					findAFriend[friendBeingShown] = ("\u2713"+findAFriend[polyBeingShown]);
@@ -3681,13 +3628,16 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				
 				AlertDialog.Builder builder7 = new AlertDialog.Builder(this);
     	        builder7.setTitle("Select the Distance:");
-    	        builder7.setItems(distNumberFriend, new DialogInterface.OnClickListener() {
+    	        builder7.setItems(distance, new DialogInterface.OnClickListener() {
     	            public void onClick(DialogInterface dialog, int distSel) {
     	            	//friendBeingShown = friend;
-    	            	Toast.makeText(AlertZone.this,
-								"Friends in the distance "+distNumberFriend[distSel]+ " are being found...",
-								Toast.LENGTH_SHORT).show();
-    	            	new findDistFriendsAsync().execute(distNumberFriend[distSel]);
+    	            	/*Toast.makeText(AlertZone.this,
+								"Friends in the distance "+distance[distSel]+ " are being searched...",
+								Toast.LENGTH_SHORT).show();*/
+    	            	circRad = realDistance[distSel];
+    	            	if (circRad==15000000)
+    	            		circRad =6000000;
+    	            	new findDistFriendsAsync().execute(distance[distSel]);
     	            }
     	        }).setCancelable(false)
 	           .setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
