@@ -1656,7 +1656,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			
 			drawCircle(new LatLng(myCurrentLat, myCurrentLong),0,0);//arguments: drawCircle(center,,time,color)
 			
-			double[] realDistance = {10,50,100,250,500,1000,2500,5000,10000,50000,100000,1000000,3000000,15000000};
+			double[] realDistance = {10,50,100,250,500,1000,2500,5000,10000,50000,100000,1000000,3000000,7000000};
 	        int[] zoomLevel = {21,19,18,16,15,14,13,12,11,9,8,4,2,1};
 	        for (int i = 0; i < realDistance.length; i++) {
 	        	if (Double.valueOf(result.get(result.size()-1).get(0))==realDistance[i]){
@@ -2102,7 +2102,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		}
     }
     
-    private class checkLinkExistence extends AsyncTask<String, Integer, Integer>{ // X,Y,Z
+    /*private class checkLinkExistence extends AsyncTask<String, Integer, Integer>{ // X,Y,Z
     	
     	protected Integer doInBackground(String... params) { // Z,X
 		    URL u = null;
@@ -2153,7 +2153,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		protected void onCancelled (Integer result){
 			super.onCancelled(result);
 		}
-    }
+    }*/
 	
 
     private class polyShapeGet extends AsyncTask<String, Integer, ArrayList<PolygonOptions>>{ // X,Y,Z
@@ -3012,7 +3012,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	
 	public void getEverything(){
 
-		int linkStatus = 0;
+		/*int linkStatus = 0;
 		if (!checkLinkOk){
 			try {
 				linkStatus = new checkLinkExistence().execute().get();
@@ -3023,7 +3023,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}
+		}*/
 		eraseMap1();
 		holdChange = false;
 		removeEverything();
@@ -3108,42 +3108,6 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			
 			new shapeSend().execute(LinkMarker);
 			//new shapeSend().execute(LinkPolyShapes);
-		}
-		
-		startIs = true;
-		boolean endIs = false;
-		
-		
-		if (counterCirc==0){
-			endIs = true;
-			URLMarker = "http://cs-server.usc.edu:1111/allMarkers.php/?start=" + startIs + "&end=" + endIs + "&user="+userName
-					+"&counterCirc=0&centerLat=0&centerLong=0&radius=0&circCounts=0";
-			LinkMarker = URLMarker.replace(" ", "%20");
-			new shapeSend().execute(LinkMarker);
-		}
-		
-		for (int i = 0; i < counterCirc; i++) {
-			Log.d("send1", "Hello");
-			
-			if (i == counterCirc-1)
-				endIs = true;
-			
-			URLMarker = "http://cs-server.usc.edu:1111/allMarkers.php/?start="+startIs+"&end="+endIs+"&user="+userName
-					+"&counterCirc="+ i;
-			
-			URLMarker += "&centerLat=" + marker.get(i).getPosition().latitude;
-			URLMarker += "&centerLong=" + marker.get(i).getPosition().longitude + "&radius="+circType.get(i);
-	
-			if (startIs){
-				URLMarker += "&circCounts="+counterCirc;
-				startIs = false;
-			}
-		
-			Log.d("send2", "Hello");
-		    LinkMarker = URLMarker.replace(" ", "%20");
-			Log.d("Link", LinkMarker);
-			
-			new shapeSend().execute(LinkMarker);
 		}
 	}
 	
@@ -3614,7 +3578,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     		case 7:
     			circRad = 0;
     			final String[] distance = {"10m","50m","100m","250m","500m","1000m","2500m","5000m","10Km","50Km","100Km","1000Km","3000Km","15000Km"};
-    			final int[] realDistance = {10,50,100,250,500,1000,2500,5000,10000,50000,100000,1000000,3000000,15000000};
+    			final int[] realDistance = {10,50,100,250,500,1000,2500,5000,10000,50000,100000,1000000,3000000,7000000};
 				/*
 				if (friendBeingShown!=-1 && friendBeingShown<findAFriend.length){
 					findAFriend[friendBeingShown] = ("\u2713"+findAFriend[polyBeingShown]);
@@ -3635,7 +3599,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 								"Friends in the distance "+distance[distSel]+ " are being searched...",
 								Toast.LENGTH_SHORT).show();*/
     	            	circRad = realDistance[distSel];
-    	            	if (circRad==15000000)
+    	            	if (circRad==7000000)
     	            		circRad =6000000;
     	            	new findDistFriendsAsync().execute(distance[distSel]);
     	            }
@@ -3792,7 +3756,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		        map.animateCamera(update);
 				map2.animateCamera(update);
 				Toast.makeText(AlertZone.this,
-						"zone name: "+polyNames.get(counterWait),
+						"Zone name: "+polyNames.get(counterWait),
 						Toast.LENGTH_SHORT).show();
 		    
 		    }}, 2000*(counterWait+1));
