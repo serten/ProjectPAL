@@ -135,6 +135,7 @@ import com.google.android.gms.plus.model.people.Person.Name;
 public class AlertZone extends FragmentActivity implements OnMapReadyCallback,ConnectionCallbacks, OnConnectionFailedListener,LocationListener, android.location.LocationListener {
 	private final LatLng LOCATION_LA = new LatLng(34.022324, -118.282522);
 	public final static String EXTRA_MESSAGE = "com.example.MESSAGE";
+	final static String GROUP_KEY_EMAILS = "group_key_emails";
 	public final static String USER_ID = "com.example.USERID";
 	public final static String ZOOM_ZONE = "com.example.ZOOMZONE";
 	//public final static int tInterval = 7000;
@@ -214,6 +215,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	int markClick = 0;
 	int polyBeingShown = -1;
 	int viewBeingShown = 0;
+	int friendBeingShown = -1;
 	MenuItem itemSel;
 
 	
@@ -249,9 +251,12 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
         };
     
     Bundle notificationBundle = null;
-    
+    int numMessages = 0;
     Handler myHandlerForZones = new Handler();
      
+    private ArrayList<String> nameOfAllFriends = new ArrayList<String>();
+    Marker oneFriendMarker;
+    ArrayList<Marker> kNNFriendsMarkers = new ArrayList<Marker>();
    
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -259,6 +264,8 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		
 		activity = this;
 
+		
+		
 		uiHelper = new UiLifecycleHelper(this, null);
 		uiHelper.onCreate(savedInstanceState);
 		
@@ -268,6 +275,35 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		setIntent(intent);
 		userName = intent.getStringExtra(PalMenu.EXTRA_MESSAGE);
 		userID = intent.getStringExtra(PalMenu.USER_ID);
+		
+		if (notificationBundle != null) {
+            String notificationData = notificationBundle.getString(ZOOM_ZONE);
+            if(!notificationData.equals("com.example.ZOOMZONE")) {
+            	userID = notificationBundle.getString(USER_ID);
+    			userName = notificationBundle.getString(EXTRA_MESSAGE);
+            	//Toast.makeText(this, notificationData,Toast.LENGTH_SHORT).show();
+            	LatLngBounds.Builder builder = new LatLngBounds.Builder();
+		        for (Marker m : markers.get(Integer.valueOf(notificationData))) {
+		            builder.include(m.getPosition());
+		        }
+		        LatLngBounds bounds = builder.build();
+		        int padding = 100; // offset from edges of the map
+		                                            // in pixels
+		        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
+		                padding);
+		        Toast.makeText(getBaseContext(), notificationData,Toast.LENGTH_SHORT).show();
+		        map.animateCamera(update);
+				map2.animateCamera(update);
+            	Log.d("My toast", "should show");
+            	notificationBundle = null;
+            	if(mnm!=null)
+            		mnm.cancelAll();
+            	//mnm = null;
+            }
+        	Log.d("Bundle", "not empty");
+        }else
+        	Log.d("Bundle", "is empty!");
+		
 		/*Bundle bundle = intent.getExtras();
         if (bundle != null) {
             String notificationData = bundle.getString(ZOOM_ZONE);
@@ -407,7 +443,8 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		map2  = ((MapFragment) getFragmentManager().findFragmentById(R.id.map2)).getMap();
 		mpFrag2.getMapAsync(this);
 		getEverything();
-
+		//get the friends list for future use 
+		new nameOfAllFriendsAsync().execute();
 		mDrawerList.setAdapter(new ArrayAdapter<String>(this,R.layout.alert_zone_drawer_list_item, mListTitles));
         Log.d("onCreate","-1.7");
         mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
@@ -493,9 +530,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			});
 
 	}
-		
-		
-		
+
 		map2.setOnMarkerClickListener(new OnMarkerClickListener() {
 
 			
@@ -1306,9 +1341,10 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	@Override
 	public void onMapReady(GoogleMap googleMap) {
 		// TODO Auto-generated method stub
-		map.addMarker(new MarkerOptions()
+		/*This is not necessary it just adds a marker to the center of map (close to africa)
+		 * map.addMarker(new MarkerOptions()
         .position(new LatLng(0, 0))
-        .title("Marker"));
+        .title("Marker"));*/
 		
 	}
 	
@@ -1408,7 +1444,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
         	eT2.setText("Lat: " + String.format("%.6f",i));
         	eT3.setText("Long: " + String.format("%.6f",j));
         	
-        	map2.addMarker(new MarkerOptions().position(myPos).title("We Are Here! Suleyman-Keyvan-Ali"));
+        	//map2.addMarker(new MarkerOptions().position(myPos).title("We Are Here! Suleyman-Keyvan-Ali"));
         }
     }
     
@@ -1443,6 +1479,457 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			super.onCancelled(result);
 		}
     }
+    
+    private class findDistFriendsAsync extends AsyncTask<String, Integer, ArrayList<ArrayList<String>>>{// X,Y,Z
+    	
+		@Override
+		protected ArrayList<ArrayList<String>> doInBackground(String... arg0) { // Z,X
+			// TODO Auto-generated method stub
+
+    		try {
+    			String strURL="http://54.187.253.246/selectuser/distance_alertZone.php?userID="+userID+"&distance="+arg0[0];
+    			Log.d("Link-f",strURL);
+				StringBuilder url = new StringBuilder(strURL);
+				HttpGet get = new HttpGet(url.toString());	
+				HttpClient client = new DefaultHttpClient();				
+				/*HttpPost post = new HttpPost(url.toString());				
+				HttpParams p=new BasicHttpParams();
+				p.setParameter("userID", userID);
+				post.setParams(p);*/
+				
+				HttpResponse r = client.execute(get);
+				ArrayList<ArrayList<String>> knnFriends = new ArrayList<ArrayList<String>>();
+				///////////////////////////////////////////////////////////
+				
+				/////////////////////////////////////////////////////////
+				int status = r.getStatusLine().getStatusCode();
+				String data = null;
+				JSONObject explrObject = null;
+				Log.d("Error", "test0");
+
+				if (status == 200) {
+					HttpEntity e = r.getEntity();				
+					data = EntityUtils.toString(e);
+					explrObject = new JSONObject(data);
+
+					int numberOfFriendsReturned = Integer.valueOf(explrObject.getString("numberOfFriendsReturned"));
+					ArrayList<String> oneRow;
+					for (int i = 1; i <= numberOfFriendsReturned; i++) {
+						oneRow = new ArrayList<String>();
+						oneRow.add(explrObject.getString("name"+String.valueOf(i)));
+						oneRow.add(explrObject.getString("lat"+String.valueOf(i)));
+						oneRow.add(explrObject.getString("long"+String.valueOf(i)));
+						oneRow.add(explrObject.getString("friendUpdateTime"+String.valueOf(i)));
+						
+						knnFriends.add(oneRow);
+					}
+					oneRow = new ArrayList<String>();
+					oneRow.add(arg0[0]);
+					knnFriends.add(oneRow);					
+					return knnFriends;
+					
+				} else {
+					Toast.makeText(AlertZone.this, "Error Occured",
+							Toast.LENGTH_SHORT).show();
+				}
+
+			} catch (ClientProtocolException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (JSONException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+				System.out.println(e1);
+			}
+			return null;
+		}
+		
+		
+		protected void onPostExecute(ArrayList<ArrayList<String>> result) { // Z
+			
+			if (Integer.valueOf(result.get(result.size()-1).get(0))>result.size())
+				Toast.makeText(AlertZone.this,
+						"Ooops, there are only \""+String.valueOf(result.size()-1)+"\" friends available.",
+						Toast.LENGTH_SHORT).show();
+			for (int i = 0; i < result.size()-1; i++) {
+				
+				double lat = Double.valueOf(result.get(i).get(1));
+				double lng = Double.valueOf(result.get(i).get(2));
+				Log.d("Error-ins-f", "3");					
+				String lastTime = result.get(i).get(3);
+				Log.d("Error-ins-f", "4");
+				LatLng ll = new LatLng(lat, lng);
+				String nameOfKFriend = result.get(i).get(0);
+				
+				MarkerOptions options = new MarkerOptions()
+				.title(nameOfKFriend+" is "+String.valueOf(i))
+				.anchor(0.5f, 0.5f)
+				.snippet(lastTime)
+				.position(ll)
+				.icon(BitmapDescriptorFactory.fromResource(R.drawable.friendthumb)).anchor(0.5f, 0.5f).draggable(false);
+			
+				kNNFriendsMarkers.add(map.addMarker(options));
+			}
+			
+			LatLngBounds.Builder builder = new LatLngBounds.Builder();
+			for (Marker m : kNNFriendsMarkers) {
+	            builder.include(m.getPosition());
+	        }
+		
+	        if (kNNFriendsMarkers.size()!=0){
+				LatLngBounds bounds = builder.build();
+		        int padding = 25; // offset from edges of the map
+		                                            // in pixels
+		        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
+		                padding);
+		        map.moveCamera(update);
+				map2.moveCamera(update);
+	        }
+		}
+
+		protected void onCancelled (ArrayList<ArrayList<String>> result){
+			super.onCancelled(result);
+		}
+			
+    	
+    }
+    
+    
+    private class nameOfAllFriendsAsync extends AsyncTask<String, Integer, Integer>{ // X,Y,Z
+    	
+    	protected Integer doInBackground(String... params) { // Z,X
+    		
+    		try {
+    			String strURL="http://54.187.253.246/selectuser/friendsList_alertZone.php?userID="+userID;
+    			
+				StringBuilder url = new StringBuilder(strURL);
+				HttpGet get = new HttpGet(url.toString());	
+				HttpClient client = new DefaultHttpClient();				
+				/*HttpPost post = new HttpPost(url.toString());				
+				HttpParams p=new BasicHttpParams();
+				p.setParameter("userID", userID);
+				post.setParams(p);*/
+				
+				HttpResponse r = client.execute(get);
+				
+				///////////////////////////////////////////////////////////
+				
+				/////////////////////////////////////////////////////////
+				int status = r.getStatusLine().getStatusCode();
+				String data = null;
+				JSONObject explrObject = null;
+				Log.d("Error", "test0");
+				if (status == 200) {
+					Log.d("Error-ins", "test0");
+					HttpEntity e = r.getEntity();
+					data = EntityUtils.toString(e);
+					explrObject = new JSONObject(data);
+					Log.d("Error-ins", "test1");
+					int numberOfFriends = Integer.valueOf(explrObject.getString("numberOfFriends"));
+					
+					Log.d("Error is-1", explrObject.getString("numberOfFriends"));
+					
+					for (int i = 1; i <= numberOfFriends; i++) {
+						nameOfAllFriends.add(explrObject.getString("row"+i));
+					}
+					
+					return numberOfFriends;
+					
+				} else {
+					Toast.makeText(AlertZone.this, "Error Occured",
+							Toast.LENGTH_SHORT).show();
+				}
+
+			} catch (ClientProtocolException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (JSONException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+				System.out.println(e1);
+			}
+			return 0;
+		}
+
+		protected void onPostExecute(Integer result) { // Z
+			
+		}
+
+		protected void onCancelled (Integer result){
+			super.onCancelled(result);
+		}
+    }
+    
+    
+    
+    private class findOneFriendAsync extends AsyncTask<String, Integer, String[]>{// X,Y,Z
+
+		@Override
+		protected String[] doInBackground(String... arg0) { // Z,X
+			// TODO Auto-generated method stub
+
+    		try {
+    			String strURL="http://54.187.253.246/selectuser/friendsList_alertZone.php?userID="+userID+"&friendName="+arg0[0];
+    			Log.d("Link-f",strURL);
+				StringBuilder url = new StringBuilder(strURL);
+				HttpGet get = new HttpGet(url.toString());	
+				HttpClient client = new DefaultHttpClient();				
+				/*HttpPost post = new HttpPost(url.toString());				
+				HttpParams p=new BasicHttpParams();
+				p.setParameter("userID", userID);
+				post.setParams(p);*/
+				
+				HttpResponse r = client.execute(get);
+				
+				///////////////////////////////////////////////////////////
+				
+				/////////////////////////////////////////////////////////
+				int status = r.getStatusLine().getStatusCode();
+				String data = null;
+				JSONObject explrObject = null;
+				Log.d("Error", "test0");
+				if (status == 200) {
+					Log.d("Error-ins-f", "1");
+					HttpEntity e = r.getEntity();
+					Log.d("Error-ins-f-2", e.toString());					
+					data = EntityUtils.toString(e);
+					Log.d("Error-ins-f-3", data.toString());
+					explrObject = new JSONObject(data);
+					
+					
+					String[] putTo = {explrObject.getString("lat"), explrObject.getString("long"), explrObject.getString("friendUpdateTime"), arg0[0]};
+					
+					return putTo;
+					
+				} else {
+					Toast.makeText(AlertZone.this, "Sorry, couldn't locate your friend!",
+							Toast.LENGTH_SHORT).show();
+				}
+
+			} catch (ClientProtocolException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (JSONException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+				System.out.println(e1);
+			}
+			return null;
+		}
+		
+		
+		protected void onPostExecute(String[] result) { // Z
+
+			Log.d("Error-ins-f", "2");					
+			double lat = Double.valueOf(result[0]);
+			double lng = Double.valueOf(result[1]);
+			Log.d("Error-ins-f", "3");					
+			String lastTime = result[2];
+			Log.d("Error-ins-f", "4");
+			LatLng ll = new LatLng(lat, lng);
+			CameraUpdate update = CameraUpdateFactory.newLatLngZoom(ll, 18);
+			map2.animateCamera(update);
+			map.animateCamera(update);
+			Geocoder gc = new Geocoder(AlertZone.this);
+			List<Address> list = null;
+			try {
+				list = gc.getFromLocation(lat, lng, 1);
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		
+			Address add = list.get(0);
+			locality = add.getLocality();
+			Log.d("locality-friend:", locality);					
+			MarkerOptions options = new MarkerOptions()
+			.title(locality)
+			.anchor(0.5f, 0.5f)
+			.snippet(lastTime)
+			.position(ll)
+			.icon(BitmapDescriptorFactory.fromResource(R.drawable.friendthumb)).anchor(0.5f, 0.5f).draggable(false);
+			
+			Toast.makeText(AlertZone.this, lastTime,
+					Toast.LENGTH_LONG).show();
+			oneFriendMarker = map.addMarker(options);
+			
+			blinkLight(0,options);			
+
+		}
+
+		protected void onCancelled (String[] result){
+			super.onCancelled(result);
+		}
+			
+    	
+    }
+    
+    
+    
+    
+    public void blinkLight(int t, final MarkerOptions op){
+    	Handler handle = new Handler();
+    	handle.postDelayed(new Runnable() {			
+			public void run() {
+				oneFriendMarker.remove();
+				op.icon(BitmapDescriptorFactory.fromResource(R.drawable.friendthumb));
+				oneFriendMarker = map.addMarker(op);
+		    }}, t);
+    	if (t<4200)
+    		blinkDark(t+300, op);
+    	else
+    		handle.postDelayed(new Runnable() {			
+    			public void run() {
+    				oneFriendMarker.remove();
+    		    }}, t+300);
+			
+    }
+    
+    public void blinkDark(int t, final MarkerOptions op){
+    	Handler handle = new Handler();
+		handle.postDelayed(new Runnable() {			
+			public void run() {
+				oneFriendMarker.remove();
+				op.icon(BitmapDescriptorFactory.fromResource(R.drawable.friendthumbdark));
+				oneFriendMarker = map.addMarker(op);
+		    }}, t);
+    	if (t<4200)
+    		blinkLight(t+300, op);
+    	else
+    		handle.postDelayed(new Runnable() {			
+    			public void run() {
+    				oneFriendMarker.remove();
+    		    }}, t+300);
+
+    }
+    
+    
+    private class findKNNFriendsAsync extends AsyncTask<String, Integer, ArrayList<ArrayList<String>>>{// X,Y,Z
+
+		@Override
+		protected ArrayList<ArrayList<String>> doInBackground(String... arg0) { // Z,X
+			// TODO Auto-generated method stub
+
+    		try {
+    			String strURL="http://54.187.253.246/selectuser/kNN_alertZone.php?userID="+userID+"&kFriends="+arg0[0];
+    			Log.d("Link-f",strURL);
+				StringBuilder url = new StringBuilder(strURL);
+				HttpGet get = new HttpGet(url.toString());	
+				HttpClient client = new DefaultHttpClient();				
+				/*HttpPost post = new HttpPost(url.toString());				
+				HttpParams p=new BasicHttpParams();
+				p.setParameter("userID", userID);
+				post.setParams(p);*/
+				
+				HttpResponse r = client.execute(get);
+				ArrayList<ArrayList<String>> knnFriends = new ArrayList<ArrayList<String>>();
+				///////////////////////////////////////////////////////////
+				
+				/////////////////////////////////////////////////////////
+				int status = r.getStatusLine().getStatusCode();
+				String data = null;
+				JSONObject explrObject = null;
+				Log.d("Error", "test0");
+
+				if (status == 200) {
+					HttpEntity e = r.getEntity();				
+					data = EntityUtils.toString(e);
+					explrObject = new JSONObject(data);
+
+					int numberOfFriendsReturned = Integer.valueOf(explrObject.getString("numberOfFriendsReturned"));
+					ArrayList<String> oneRow;
+					for (int i = 1; i <= numberOfFriendsReturned; i++) {
+						oneRow = new ArrayList<String>();
+						oneRow.add(explrObject.getString("name"+String.valueOf(i)));
+						oneRow.add(explrObject.getString("lat"+String.valueOf(i)));
+						oneRow.add(explrObject.getString("long"+String.valueOf(i)));
+						oneRow.add(explrObject.getString("friendUpdateTime"+String.valueOf(i)));
+						
+						knnFriends.add(oneRow);
+					}
+					oneRow = new ArrayList<String>();
+					oneRow.add(arg0[0]);
+					knnFriends.add(oneRow);					
+					return knnFriends;
+					
+				} else {
+					Toast.makeText(AlertZone.this, "Error Occured",
+							Toast.LENGTH_SHORT).show();
+				}
+
+			} catch (ClientProtocolException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (JSONException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+				System.out.println(e1);
+			}
+			return null;
+		}
+		
+		
+		protected void onPostExecute(ArrayList<ArrayList<String>> result) { // Z
+			
+			if (Integer.valueOf(result.get(result.size()-1).get(0))>result.size())
+				Toast.makeText(AlertZone.this,
+						"Ooops, there are only \""+String.valueOf(result.size()-1)+"\" friends available.",
+						Toast.LENGTH_SHORT).show();
+			for (int i = 0; i < result.size()-1; i++) {
+				
+				double lat = Double.valueOf(result.get(i).get(1));
+				double lng = Double.valueOf(result.get(i).get(2));
+				Log.d("Error-ins-f", "3");					
+				String lastTime = result.get(i).get(3);
+				Log.d("Error-ins-f", "4");
+				LatLng ll = new LatLng(lat, lng);
+				String nameOfKFriend = result.get(i).get(0);
+				
+				MarkerOptions options = new MarkerOptions()
+				.title(nameOfKFriend+" is "+String.valueOf(i))
+				.anchor(0.5f, 0.5f)
+				.snippet(lastTime)
+				.position(ll)
+				.icon(BitmapDescriptorFactory.fromResource(R.drawable.friendthumb)).anchor(0.5f, 0.5f).draggable(false);
+			
+				kNNFriendsMarkers.add(map.addMarker(options));
+			}
+			
+			LatLngBounds.Builder builder = new LatLngBounds.Builder();
+			for (Marker m : kNNFriendsMarkers) {
+	            builder.include(m.getPosition());
+	        }
+		
+	        if (kNNFriendsMarkers.size()!=0){
+				LatLngBounds bounds = builder.build();
+		        int padding = 25; // offset from edges of the map
+		                                            // in pixels
+		        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
+		                padding);
+		        map.moveCamera(update);
+				map2.moveCamera(update);
+	        }
+		}
+
+		protected void onCancelled (ArrayList<ArrayList<String>> result){
+			super.onCancelled(result);
+		}
+			
+    	
+    }
+    
     
     private class shapeSend extends AsyncTask<String, Integer, String>{ // X,Y,Z
     	
@@ -1646,8 +2133,8 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 					return options;
 					
 				} else {
-					Toast.makeText(AlertZone.this, "error jun",
-							Toast.LENGTH_SHORT);
+					Toast.makeText(AlertZone.this, "Error Occured",
+							Toast.LENGTH_SHORT).show();
 				}
 
 			} catch (ClientProtocolException e) {
@@ -1702,19 +2189,22 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 						public void run() {
 					     // Actions to do after 0.5 seconds
 							LatLngBounds.Builder builder = new LatLngBounds.Builder();
+							boolean includesPoint = false;
 							for (int j = 0; j < markers.size(); j++) {
 								for (Marker m : markers.get(j)) {
 						            builder.include(m.getPosition());
+						            includesPoint = true;
 						        }
 							}
-							
-							LatLngBounds bounds = builder.build();
-					        int padding = 10; // offset from edges of the map
-					                                            // in pixels
-					        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
-					                padding);
-					        map.moveCamera(update);
-							map2.moveCamera(update);
+							if (includesPoint){
+								LatLngBounds bounds = builder.build();
+						        int padding = 10; // offset from edges of the map
+						                                            // in pixels
+						        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
+						                padding);
+						        map.moveCamera(update);
+								map2.moveCamera(update);
+							}
 					    }}, 800);
 				}
 				
@@ -1782,8 +2272,8 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 					return peopleInsideZoneNumber;
 					
 				} else {
-					Toast.makeText(AlertZone.this, "error jun",
-							Toast.LENGTH_SHORT);
+					Toast.makeText(AlertZone.this, "Error Occured",
+							Toast.LENGTH_SHORT).show();
 				}
 
 			} catch (ClientProtocolException e) {
@@ -1820,19 +2310,22 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				Address add = list.get(0);
 				locality = add.getLocality();
 				if (zonesSelectedToShowFriendsInside.contains(zonesNamesHaveFriendsInside.get(i))){
-					MarkerOptions options = new MarkerOptions()
-					.title(friendsNameInsideZonesList.get(i))
-					.snippet("Latest Time Seen: "+friendsInsideZonesUpdateTime.get(i))
-					.anchor(0.5f, 0.5f)
-					.position(friendsInsideZonesLocation.get(i))
-					.icon(BitmapDescriptorFactory.fromResource(R.drawable.frface)).anchor(0.5f, 0.5f).draggable(false);
-					if (friendsNameInsideZonesList.get(i).equals(userName)){
-						options.icon(BitmapDescriptorFactory.fromResource(R.drawable.sameown));
+					if (!friendsNameInsideZonesList.get(i).equals(userName)){
+						MarkerOptions options = new MarkerOptions()
+						.title(friendsNameInsideZonesList.get(i))
+						.snippet("Last Time Seen Here: "+friendsInsideZonesUpdateTime.get(i))
+						.anchor(0.5f, 0.5f)
+						.position(friendsInsideZonesLocation.get(i))
+						.icon(BitmapDescriptorFactory.fromResource(R.drawable.frface)).anchor(0.5f, 0.5f).draggable(false);
+						//options.icon(BitmapDescriptorFactory.fromResource(R.drawable.sameown));
+						friendMarkers.add(map.addMarker(options));
 					}
-					friendMarkers.add(map.addMarker(options));
+					
 				}
 				//friendMarkers.add(map2.addMarker(options));
 			}
+			
+			
 			//in here I calculate the recent changes of friendlist, and put in recentChangesOfList
 			ArrayList<String> recentChangesOfList = new ArrayList<String>();
 			for (int i = 0; i < friendsNameInsideZonesList.size(); i++) {
@@ -1848,7 +2341,8 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 					recentChangesOfListCompare.add(friendsNameInsideZonesListCompare.get(i));
 			}
 			Log.d("recentChangesOfListCompare:", String.valueOf(recentChangesOfListCompare.size()));
-			
+			LatLngBounds.Builder builder = new LatLngBounds.Builder();
+	        boolean atLeastOnePoint = false;
 			
 			if (recentChangesOfList.size()!=0 || recentChangesOfListCompare.size()!=0 || mnm==null){
 				Log.d("friendsNameInsideZonesList:", String.valueOf(friendsNameInsideZonesList.size()));
@@ -1858,10 +2352,20 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 					mnm.cancelAll();
 					mnm = null;
 				}*/
+
 				for (int i = 0; i < recentChangesOfList.size(); i++) {
 					Log.d("notif-1", "2");
 					if (zonesSelectedToShowFriendsInside.contains(zonesNamesHaveFriendsInside.get(friendsNameInsideZonesList.indexOf(recentChangesOfList.get(i))))){
 						Log.d("notif-1", "3");
+						for (int k = 0; k < polyNames.size(); k++) {
+							for (int j = 0; j < zonesNamesHaveFriendsInside.size(); j++) {
+								if (polyNames.get(k).equals(zonesNamesHaveFriendsInside.get(friendsNameInsideZonesList.indexOf(recentChangesOfList.get(i)))))
+									for (Marker m : markers.get(k)) {
+							            builder.include(m.getPosition());
+							            atLeastOnePoint = true;
+							        }
+							}
+						}
 						for (int j = 0; j < friendsNameInsideZonesList.size(); j++) {
 							Log.d("notif-1", "4");
 							if (friendsNameInsideZonesList.get(j).equals(recentChangesOfList.get(i))){
@@ -1872,10 +2376,14 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		    			        .setSmallIcon(R.drawable.pol)
 		    			        .setContentTitle("Friend has changed his Zone")
 		    			        .setContentText(friendsNameInsideZonesList.get(j) + " has moved into zone \"" + zonesNamesHaveFriendsInside.get(j) + "\"")
+		    			        .setGroup(GROUP_KEY_EMAILS)
+		    			        .setNumber(++numMessages)
 		    			        .setSound(soundUri);
 								Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), soundUri);
 							    r.play();
-						
+							    
+							    mBuilder.setPriority(Notification.PRIORITY_HIGH);
+
 				    			// Creates an explicit intent for an Activity in your app
 				    			Intent resultIntent = new Intent();
 				    			notificationBundle = new Bundle();
@@ -1915,6 +2423,15 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 					Log.d("notif-2", "2");
 					if (zonesSelectedToShowFriendsInside.contains(zonesNamesHaveFriendsInsideCompare.get(friendsNameInsideZonesListCompare.indexOf(recentChangesOfListCompare.get(i))))){
 						Log.d("notif-2", "3");
+						for (int k = 0; k < polyNames.size(); k++) {
+							for (int j = 0; j < zonesNamesHaveFriendsInsideCompare.size(); j++) {
+								if (polyNames.get(k).equals(zonesNamesHaveFriendsInsideCompare.get(friendsNameInsideZonesListCompare.indexOf(recentChangesOfListCompare.get(i)))))
+									for (Marker m : markers.get(k)) {
+							            builder.include(m.getPosition());
+							            atLeastOnePoint = true;
+							        }
+							}
+						}
 						for (int j = 0; j < friendsNameInsideZonesListCompare.size(); j++) {
 							Log.d("notif-2", "4");
 							if (friendsNameInsideZonesListCompare.get(j).equals(recentChangesOfListCompare.get(i))){								
@@ -1924,10 +2441,15 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		    			        .setSmallIcon(R.drawable.pol)
 		    			        .setContentTitle("Friend has changed his Zone")
 		    			        .setContentText(friendsNameInsideZonesListCompare.get(j) + " has moved out of zone \"" + zonesNamesHaveFriendsInsideCompare.get(j) + "\"")
+		    			        .setNumber(++numMessages)
 								.setSound(soundUri);
 								Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), soundUri);
 							    r.play();
 				    			// Creates an explicit intent for an Activity in your app
+							    
+
+							    mBuilder.setPriority(Notification.PRIORITY_HIGH);
+
 				    			Intent resultIntent = new Intent();
 				    			notificationBundle = new Bundle();
 				    			for (int k = 0; k < polyNames.size(); k++) {
@@ -1960,6 +2482,16 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 					}
 				}
 			}
+			if (atLeastOnePoint){
+		        LatLngBounds bounds = builder.build();
+		        int padding = 25; // offset from edges of the map
+		                                            // in pixels
+		        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
+		                padding);
+		        map.animateCamera(update);
+				map2.animateCamera(update);
+			}
+			
 		}
 		
 		
@@ -2095,9 +2627,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				}	
 			}
 			Log.d("Onpostexecute-3","End");
-			mListTitles[2] = "# Polygone Zones: "+String.valueOf(counterPoly);
-			mListTitles[3] = "# Circle Zones: "+String.valueOf(counterCirc);
-			mListTitles[4] = "# Total Zones: "+String.valueOf(counterPoly+counterCirc);
+			mListTitles[0] = "# Total Zones: "+String.valueOf(counterPoly+counterCirc);
 			progressDialog.dismiss();
 		}
 		
@@ -2128,19 +2658,23 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
             if(!notificationData.equals("com.example.ZOOMZONE")) {
             	userID = notificationBundle.getString(USER_ID);
     			userName = notificationBundle.getString(EXTRA_MESSAGE);
-            	Toast.makeText(this, notificationData,Toast.LENGTH_SHORT).show();
+            	//Toast.makeText(this, notificationData,Toast.LENGTH_SHORT).show();
             	LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            	boolean includesPoint = false;
 		        for (Marker m : markers.get(Integer.valueOf(notificationData))) {
 		            builder.include(m.getPosition());
+	            	includesPoint = true;
 		        }
-		        LatLngBounds bounds = builder.build();
-		        int padding = 100; // offset from edges of the map
-		                                            // in pixels
-		        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
-		                padding);
-		        Toast.makeText(getBaseContext(), notificationData,Toast.LENGTH_SHORT).show();
-		        map.animateCamera(update);
-				map2.animateCamera(update);
+		        if (includesPoint){
+			        LatLngBounds bounds = builder.build();
+			        int padding = 100; // offset from edges of the map
+			                                            // in pixels
+			        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
+			                padding);
+			        Toast.makeText(getBaseContext(), notificationData,Toast.LENGTH_SHORT).show();
+			        map.animateCamera(update);
+					map2.animateCamera(update);
+		        }
             	Log.d("My toast", "should show");
             	notificationBundle = null;
             	if(mnm!=null)
@@ -2665,22 +3199,113 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     }
 
     private void selectItem(int position) {
+    	
+    	for (int i = kNNFriendsMarkers.size()-1; i >-1; i--) {
+    		kNNFriendsMarkers.get(i).remove();
+		}
+    	kNNFriendsMarkers = new ArrayList<Marker>();
+    	
+    	
 
     	File imageFile = null;
     	switch (position){
 	    	case 0:
 	    		//Toast.makeText(this, "KS will complete it later. Not Working Now!",Toast.LENGTH_SHORT).show();
 	    		break;
-    		case 1:
+    		/*case 1:
     			Toast.makeText(this, "KS will complete it later. Not Working Now!",Toast.LENGTH_SHORT).show();
-				break;
+				break;*/
     		case 5:
-				Toast.makeText(this, "KS will complete it later. Not Working Now!",Toast.LENGTH_SHORT).show();   
+    			final String[] knnNumberFriend = {"1","2","3","4","5","10","15","20","40","50","100"};
+				
+				/*
+				if (friendBeingShown!=-1 && friendBeingShown<findAFriend.length){
+					findAFriend[friendBeingShown] = ("\u2713"+findAFriend[polyBeingShown]);
+    			}
+				
+				for (int i = 0; i < findAFriend.length; i++) {
+					if (i!=polyBeingShown){
+						findAFriend[i] = "   "+findAFriend[i];
+					}
+				}*/
+				
+				AlertDialog.Builder builder5 = new AlertDialog.Builder(this);
+    	        builder5.setTitle("Make your selection of K for NNs:");
+    	        builder5.setItems(knnNumberFriend, new DialogInterface.OnClickListener() {
+    	            public void onClick(DialogInterface dialog, int kOfNN) {
+    	            	//friendBeingShown = friend;
+    	            	Toast.makeText(AlertZone.this,
+								"The "+knnNumberFriend[kOfNN]+ " NNs are being shown...",
+								Toast.LENGTH_SHORT).show();
+    	            	new findKNNFriendsAsync().execute(knnNumberFriend[kOfNN]);
+    	            }
+    	        }).setCancelable(false)
+	           .setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
+	               @Override
+	               public void onClick(DialogInterface dialog, int id) {
+	            	   	Log.d("case 11", "1");
+						Log.d("case 11", "2");
+						
+						/*Log.d("case 11",polyName);
+
+						Toast.makeText(AlertZone.this,
+								"Named The Polygon: "+polyName,
+								Toast.LENGTH_SHORT).show();*/
+	               }
+	           });
+    	        
+    	        Log.d("alert-p:","3");
+    	        AlertDialog alert5 = builder5.create();
+    	        alert5.show();
+				
 				break;
-			case 6:
-				Toast.makeText(this, "KS will complete it later. Not Working Now!",Toast.LENGTH_SHORT).show();   
+			case 4:
+
+				String[] findAFriend = new String[nameOfAllFriends.size()];
+				for (int i = 0; i < nameOfAllFriends.size(); i++) {
+					findAFriend[i] = nameOfAllFriends.get(i);
+				}
+				/*
+				if (friendBeingShown!=-1 && friendBeingShown<findAFriend.length){
+					findAFriend[friendBeingShown] = ("\u2713"+findAFriend[polyBeingShown]);
+    			}
+				
+				for (int i = 0; i < findAFriend.length; i++) {
+					if (i!=polyBeingShown){
+						findAFriend[i] = "   "+findAFriend[i];
+					}
+				}*/
+				
+				AlertDialog.Builder builder0 = new AlertDialog.Builder(this);
+    	        builder0.setTitle("Select Your Friend:");
+    	        builder0.setItems(findAFriend, new DialogInterface.OnClickListener() {
+    	            public void onClick(DialogInterface dialog, int friend) {
+    	            	//friendBeingShown = friend;
+	            	   	Log.d("case 6-name", nameOfAllFriends.get(friend));
+    	            	new findOneFriendAsync().execute(nameOfAllFriends.get(friend));	    					
+
+    	            }
+    	        }).setCancelable(false)
+	           .setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
+	               @Override
+	               public void onClick(DialogInterface dialog, int id) {
+	            	   	Log.d("case 11", "1");
+						Log.d("case 11", "2");
+						
+						/*Log.d("case 11",polyName);
+
+						Toast.makeText(AlertZone.this,
+								"Named The Polygon: "+polyName,
+								Toast.LENGTH_SHORT).show();*/
+	               }
+	           });
+    	        
+    	        Log.d("alert-p:","3");
+    	        AlertDialog alert0 = builder0.create();
+    	        alert0.show();
+				//Toast.makeText(this, "KS will complete it later. Not Working Now!",Toast.LENGTH_SHORT).show();   
 				break;
-			case 7:
+			case 1:
 				
 				String[] views = {"Normal View","Satellite View","Terrain View"};
 				
@@ -2693,7 +3318,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				}
 				
 				AlertDialog.Builder builder1 = new AlertDialog.Builder(this);
-    	        builder1.setTitle("Make your selection");
+    	        builder1.setTitle("Desired View:");
     	        builder1.setItems(views, new DialogInterface.OnClickListener() {
     	            public void onClick(DialogInterface dialog, int view) {
     	            	viewBeingShown = view;
@@ -2705,7 +3330,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	    					onClick_Ter();
     	            }
     	        }).setCancelable(false)
-	           .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+	           .setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
 	               @Override
 	               public void onClick(DialogInterface dialog, int id) {
 	            	   	Log.d("case 11", "1");
@@ -2723,16 +3348,16 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     	        AlertDialog alert1 = builder1.create();
     	        alert1.show();
 				break;
-    		case 8:
+    		case 2:
     			if (counterPoly>0)
     				zoneTour(0);
     			else
     				Toast.makeText(AlertZone.this,
-    						"Currently No Zone Has Been Established!",
+    						"Currently No Zone Has Been Established By the User!",
     						Toast.LENGTH_SHORT).show();
 				
     			break;
-    		case 9:
+    		case 3:
     			Log.d("case 11", "-1");
     			
     			String[] items = new String[counterPoly];
@@ -2756,7 +3381,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     			Log.d("counterPoly:",String.valueOf(counterPoly));
 				
     	        AlertDialog.Builder builder2 = new AlertDialog.Builder(this);
-    	        builder2.setTitle("Make your selection");
+    	        builder2.setTitle("Visit a Zone:");
     	        builder2.setItems(items, new DialogInterface.OnClickListener() {
     	            public void onClick(DialogInterface dialog, int item) {
     	            	
@@ -2771,11 +3396,12 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 	    		                                            // in pixels
 	    		        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
 	    		                padding);
+	    		        Toast.makeText(AlertZone.this, "Fetching the zone \"" + polyNames.get(item) +"\"", Toast.LENGTH_SHORT).show();
 	    		        map.animateCamera(update);
 	    				map2.animateCamera(update);
     	            }
     	        }).setCancelable(false)
-	           .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+	           .setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
 	               @Override
 	               public void onClick(DialogInterface dialog, int id) {
 	            	   	Log.d("case 11", "1");
@@ -2915,12 +3541,13 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     			mnm.notify(0, mBuilder.build());*/
     			//break;
     		
-    		case 10:
+    		case 6:
+    			
     			Log.d("checkFriends", "Yes-1");
     			for (int i = friendMarkers.size()-1; i>-1 ; i--) {
     				friendMarkers.get(i).remove();
-				}
-				friendMarkers.clear();
+    			}
+    			friendMarkers.clear();
     			friendsNameInsideZonesList = new ArrayList<String>();
     			friendsNameInsideZonesListCompare = new ArrayList<String>();
     			friendsInsideZonesLocation = new ArrayList<LatLng>();
@@ -2930,6 +3557,9 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     			zonesSelectedToShowFriendsInside = new ArrayList<String>();
     			justStartedActivityForNotifications = true;
     			myHandlerForZones.removeCallbacksAndMessages(null);
+    			if (mnm!=null){
+    				mnm.cancelAll();
+    			}
     			
     			final String[] multiItems = new String[counterPoly];
     			//final CharSequence myList[] = { "Tea", "Coffee", "Milk" };
@@ -2941,7 +3571,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				}	
 				
 				AlertDialog.Builder builder3 = new AlertDialog.Builder(this);
-    	        builder3.setTitle("Make your selection");
+    	        builder3.setTitle("Select Zones To Locate Friends Inside:");
     	        builder3.setMultiChoiceItems(multiItems, null,
     	        	    new DialogInterface.OnMultiChoiceClickListener() {
     	        	    public void onClick(DialogInterface dialog, int item, boolean isChecked) {
@@ -2963,9 +3593,9 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				   @Override
 				   public void onClick(DialogInterface dialog, int which) {
 				    // TODO Auto-generated method stub
-				    Toast.makeText(getApplicationContext(),
-				      "You Have Cancel the Dialog box", Toast.LENGTH_LONG)     
-				      .show();
+				    /*Toast.makeText(getApplicationContext(),
+				      "You Have Cancelled the Dialog box", Toast.LENGTH_LONG)     
+				      .show();*/
 			   }})
 	           .setPositiveButton("OK", new DialogInterface.OnClickListener() {
 	               @Override
@@ -2991,9 +3621,53 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				Log.d("checkFriends", "Yes-2");
 				break;
     		
-    		case 11:
+    		case 7:
+    			final String[] distNumberFriend = {"10m","50m","100m","250m","500m","1000m","1500m","5000m","10Km","50Km","100Km","1000Km","10000Km"};
+				
+				/*
+				if (friendBeingShown!=-1 && friendBeingShown<findAFriend.length){
+					findAFriend[friendBeingShown] = ("\u2713"+findAFriend[polyBeingShown]);
+    			}
+				
+				for (int i = 0; i < findAFriend.length; i++) {
+					if (i!=polyBeingShown){
+						findAFriend[i] = "   "+findAFriend[i];
+					}
+				}*/
+				
+				AlertDialog.Builder builder7 = new AlertDialog.Builder(this);
+    	        builder7.setTitle("Select the Distance:");
+    	        builder7.setItems(distNumberFriend, new DialogInterface.OnClickListener() {
+    	            public void onClick(DialogInterface dialog, int distSel) {
+    	            	//friendBeingShown = friend;
+    	            	Toast.makeText(AlertZone.this,
+								"Friends in the distance "+distNumberFriend[distSel]+ " are being found...",
+								Toast.LENGTH_SHORT).show();
+    	            	new findDistFriendsAsync().execute(distNumberFriend[distSel]);
+    	            }
+    	        }).setCancelable(false)
+	           .setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
+	               @Override
+	               public void onClick(DialogInterface dialog, int id) {
+	            	   	Log.d("case 11", "1");
+						Log.d("case 11", "2");
+						
+						/*Log.d("case 11",polyName);
+
+						Toast.makeText(AlertZone.this,
+								"Named The Polygon: "+polyName,
+								Toast.LENGTH_SHORT).show();*/
+	               }
+	           });
+    	        
+    	        Log.d("alert-p:","3");
+    	        AlertDialog alert7 = builder7.create();
+    	        alert7.show();
+				
+				break;
+    		case 8:
     			AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    			builder.setTitle("Post to Facebook")
+    			builder.setTitle("Post to Facebook:")
     					.setCancelable(false)
     					.setNegativeButton("Cancel",
     							new DialogInterface.OnClickListener() {
@@ -3006,7 +3680,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     								}
     							})
 
-    					.setPositiveButton("Post Property Details",
+    					.setPositiveButton("Post Your Location",
     							new DialogInterface.OnClickListener() {
     								public void onClick(DialogInterface dialog,
     										int id) {
@@ -3014,11 +3688,11 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     											activity);
     									shareDialogBuilder.setPicture("http://54.187.253.246/selectuser/fbSharePic.jpg");
     									// shareDialogBuilder.set
-    									shareDialogBuilder.setName("Hello");// info.getString("Address"));
+    									shareDialogBuilder.setName("Find Me!");// info.getString("Address"));
     									shareDialogBuilder
-    											.setDescription("Hello from the other side");
+    											.setDescription("I am at " + locality + " right now!");
     									shareDialogBuilder
-    											.setCaption("By Adele");
+    											.setCaption("By \""+userName+ "\", user of PalHunter App!");
     									shareDialogBuilder.setLink("https://www.google.com/maps/place/@"+myCurrentLat+","+myCurrentLong+",16.75z/data=!4m2!3m1!1s0x0:0x0");
 
     									FacebookDialog shareDialog = shareDialogBuilder
@@ -3046,6 +3720,9 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
     	zonesSelectedToShowFriendsInside.add(oneItem);
     	Log.d("zoneNamesselected-1",zonesSelectedToShowFriendsInside.get(0));
     	myHandlerForZones.removeCallbacksAndMessages(null);
+    	if (mnm != null)	
+			mnm.cancelAll();
+		numMessages = 0;
     	if (b){
     		zoneSelectionAsync(0);
     	}
@@ -3061,7 +3738,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				if (!myTask.isCancelled()){
 					new findFriendsInsideZone().execute();
 				}
-				if (time<500 && !myTask.isCancelled())
+				if (time<1200 && !myTask.isCancelled())
 		    		zoneSelectionAsync(time+1);
 		    }}, 1000*(time));
     }

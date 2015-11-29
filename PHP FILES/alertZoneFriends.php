@@ -11,8 +11,8 @@ ini_set('date.timezone', 'America/Los_Angeles');
 $time = date('H:i:s', time()); 
 $date = date('Y-m-d')." ".$time;
 // this section creates a table for alertzone information 
-$result = pg_query($conn, "SELECT PALUSER.USERNAME ,ST_X(PALUSER.CURRENTPOSITION) ,ST_Y(PALUSER.CURRENTPOSITION), PALUSER.LASTUPDATETIME, ALERTZONE.ZONENAME, FRIENDLIST.FRIENDLISTID  FROM ALERTZONE,FRIENDLIST,PALUSER  WHERE ALERTZONE.USERID='$u_id' and ALERTZONE.USERID=FRIENDLIST.USERID and FRIENDLIST.FRIENDID=PALUSER.USERID and ST_Contains(ALERTZONE.ZONECOORDINATES, PALUSER.CURRENTPOSITION) ORDER BY FRIENDLISTID;");
-$userIdPersonResult = pg_query($conn, "SELECT PALUSER.USERNAME ,ST_X(PALUSER.CURRENTPOSITION) ,ST_Y(PALUSER.CURRENTPOSITION), PALUSER.LASTUPDATETIME, ALERTZONE.ZONENAME  FROM ALERTZONE,PALUSER  WHERE ALERTZONE.USERID='$u_id' and ALERTZONE.USERID=PALUSER.USERID and ST_Contains(ALERTZONE.ZONECOORDINATES, PALUSER.CURRENTPOSITION) LIMIT 1;");
+$result = pg_query($conn, "SELECT PALUSER.USERNAME ,ST_Y(PALUSER.CURRENTPOSITION), ST_X(PALUSER.CURRENTPOSITION) , PALUSER.LASTUPDATETIME, ALERTZONE.ZONENAME  FROM ALERTZONE,FRIENDLIST,PALUSER  WHERE ALERTZONE.USERID='$u_id' and ALERTZONE.USERID=FRIENDLIST.USERID and FRIENDLIST.FRIENDID=PALUSER.USERID and ST_Contains(ALERTZONE.ZONECOORDINATES, PALUSER.CURRENTPOSITION) ORDER BY FRIENDLISTID;");
+$userIdPersonResult = pg_query($conn, "SELECT PALUSER.USERNAME ,ST_Y(PALUSER.CURRENTPOSITION),ST_X(PALUSER.CURRENTPOSITION), PALUSER.LASTUPDATETIME, ALERTZONE.ZONENAME  FROM ALERTZONE,PALUSER  WHERE ALERTZONE.USERID='$u_id' and ALERTZONE.USERID=PALUSER.USERID and ST_Contains(ALERTZONE.ZONECOORDINATES, PALUSER.CURRENTPOSITION) LIMIT 1;");
 $res = pg_query($conn, "SELECT FRIENDLISTID FROM FRIENDLIST WHERE FRIENDLIST.USERID='$u_id';");
 $numberOfFriends = pg_num_rows($res);
 //echo $result;
@@ -36,14 +36,14 @@ while ($j < $num1-1) {
 
   $row = pg_fetch_row($result);
   $j++;
-  $message = $message.'"row'.$j.'":{"name":"'.$row[0].'","lat":"'.$row[1].'","long":"'.$row[2].'","friendUpdateTime":"'.$row[3].'","zoneName":"'.$row[4].'","friendListID":"'.$row[5].'"},';
+  $message = $message.'"row'.$j.'":{"name":"'.$row[0].'","lat":"'.$row[1].'","long":"'.$row[2].'","friendUpdateTime":"'.$row[3].'","zoneName":"'.$row[4].'"},';
 }
 //Closing the file being sent back to the app
 
 if (0<$num1){
 	$row = pg_fetch_row($result);
 	$j++;
-	$message = $message.'"row'.$j.'":{"name":"'.$row[0].'","lat":"'.$row[1].'","long":"'.$row[2].'","friendUpdateTime":"'.$row[3].'","zoneName":"'.$row[4].'","friendListID":"'.$row[5].'"}';
+	$message = $message.'"row'.$j.'":{"name":"'.$row[0].'","lat":"'.$row[1].'","long":"'.$row[2].'","friendUpdateTime":"'.$row[3].'","zoneName":"'.$row[4].'"}';
 	if (0<$num2){
 		$message = $message.',';
 	}
@@ -51,7 +51,7 @@ if (0<$num1){
 if (0<$num2) {
 	$j++;
 	$row = pg_fetch_row($userIdPersonResult);
-	$message = $message.'"row'.$j.'":{"name":"'.$row[0].'","lat":"'.$row[1].'","long":"'.$row[2].'","friendUpdateTime":"'.$row[3].'","zoneName":"'.$row[4].'","friendListID":"0"}';
+	$message = $message.'"row'.$j.'":{"name":"'.$row[0].'","lat":"'.$row[1].'","long":"'.$row[2].'","friendUpdateTime":"'.$row[3].'","zoneName":"'.$row[4].'"}';
 }
 $message = $message.'}';
 //File is sent to the app

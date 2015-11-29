@@ -17,18 +17,15 @@
     <string name="action_websearch">Web search</string>
     <string name="facebook_app_id">1663824597193548</string>
     <string-array name="myMaps_array" color="#111">
-        <item>The Zones</item>
-        <item>Edit The Zones</item>
-        <item># Polygone Zones: 0</item>
-        <item># Circle Zones: 0</item>
         <item># Total Zones: 0</item>
-        <item>Show All Friends</item>
-        <item>Select A Friend</item>
         <item>Select A View</item>
         <item>Take a Zone Tour</item>
-        <item>Zone Names</item>
+        <item>Go to a Zone</item>
+        <item>Locate A Friend</item>
+        <item>kNN Friends</item>
         <item>Find Friends in the Selected Zones</item>
-        <item>Share On Facebook</item>
+        <item>Find Friends Within A Distance</item>
+        <item>Share On Facebook!</item>
         
     </string-array>
 	<string-array name="myDrop_Down_List" color="#111">
