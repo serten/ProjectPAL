@@ -173,6 +173,10 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 		Log.d("Http", "2");
 		
 		setContentView(R.layout.follow_me);
+    	Button startPath = (Button) findViewById(R.id.btnStartPath);
+		startPath.getBackground().setColorFilter(new LightingColorFilter(0xffcccccc, 0xff000000));		
+		Button followFriends = (Button) findViewById(R.id.btnFollowFriends);
+		followFriends.getBackground().setColorFilter(new LightingColorFilter(0xffcccccc, 0xff000000));
 		
 		MapFragment mpFrag = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
 		map  = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
@@ -197,6 +201,7 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
         
         /** Starting the task created above */
         downloadTask.execute("http://54.187.253.246/selectuser/friendlist_postgre.php");
+
 	}
 
 	@SuppressWarnings("finally")
@@ -323,6 +328,10 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 	    	/** Showing a message, on completion of download process */
 	        //Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
 	    }
+	    
+		protected void onCancelled (String result){
+			super.onCancelled(result);
+		}
 	}
 	
 	private void removeEverything(){
@@ -594,23 +603,45 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
     		try {
     			StringBuilder url=null;
     			if(pathStarted)
+    			{
     				url = new StringBuilder("http://54.187.253.246/selectuser/get_path_postgre.php?userID="+userID);
-    			if(followingStarted)
-    				url = new StringBuilder("http://54.187.253.246/selectuser/get_path_postgre.php?userID="+followedFriendId);
-				HttpGet get = new HttpGet(url.toString());
-				HttpClient client = new DefaultHttpClient();
-				HttpResponse r = client.execute(get);
-				int status = r.getStatusLine().getStatusCode();
-				String data = null;
-				JSONObject explrObject = null;
-				data = null;
-				Log.d("Error", "test0");
-				if (status == 200) {
-					HttpEntity e = r.getEntity();
-					Log.d("polyShapeGet-0", "hi");
-					data = EntityUtils.toString(e);
-				}
-				return data;
+    				HttpGet get = new HttpGet(url.toString());
+    				HttpClient client = new DefaultHttpClient();
+    				HttpResponse r = client.execute(get);
+    				int status = r.getStatusLine().getStatusCode();
+    				String data = null;
+    				JSONObject explrObject = null;
+    				data = null;
+    				Log.d("Error", "test0");
+    				if (status == 200) {
+    					HttpEntity e = r.getEntity();
+    					Log.d("polyShapeGet-0", "hi");
+    					data = EntityUtils.toString(e);
+    				}
+    				return data;
+    			}
+    			else if(followingStarted)
+    			{
+    				url = new StringBuilder("http://54.187.253.246/selectuser/get_path_postgre.php?userID="+followedFriendId);    				
+					HttpGet get = new HttpGet(url.toString());
+					HttpClient client = new DefaultHttpClient();
+					HttpResponse r = client.execute(get);
+					int status = r.getStatusLine().getStatusCode();
+					String data = null;
+					JSONObject explrObject = null;
+					data = null;
+					Log.d("Error", "test0");
+					if (status == 200) {
+						HttpEntity e = r.getEntity();
+						Log.d("polyShapeGet-0", "hi");
+						data = EntityUtils.toString(e);
+					}
+					return data;
+    			}
+    			else
+    			{
+    				return null;
+    			}
 					
 
 			} catch (ClientProtocolException e) {
@@ -624,106 +655,111 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 		}
 
 		protected void onPostExecute(String data) { // Z
-			ArrayList<PolylineOptions> options = new ArrayList<PolylineOptions>();
-			Log.d("polyShapeGet-0", "hi-1");
-			
-			try{
+			if (data != null)
+			{
+				ArrayList<PolylineOptions> options = new ArrayList<PolylineOptions>();
+				Log.d("polyShapeGet-0", "hi-1");
 				
-				JSONObject explrObject = new JSONObject(data);
-				Log.d("polyShapeGet-1", explrObject.toString());
-				JSONObject polys = new JSONObject(
-						explrObject.getString("polys"));
-				counterPoly = Integer.valueOf(polys.getString("polyCounts"));
-				
-				
-				Log.d("polyShapeGet-2", String.valueOf(counterPoly));
-				//Log.d("error1polyType-size ",String.valueOf(polyType.size()));
-				
-				if(followingStarted||pathStarted)
-				{
-					for (int i = 0; i < counterPoly; i++) 
+				try{
+					
+					JSONObject explrObject = new JSONObject(data);
+					Log.d("polyShapeGet-1", explrObject.toString());
+					JSONObject polys = new JSONObject(
+							explrObject.getString("polys"));
+					counterPoly = Integer.valueOf(polys.getString("polyCounts"));
+					
+					
+					Log.d("polyShapeGet-2", String.valueOf(counterPoly));
+					//Log.d("error1polyType-size ",String.valueOf(polyType.size()));
+					
+					if(followingStarted||pathStarted)
 					{
-						Log.d("polyShapeGet-2", "i="+String.valueOf(i)+" "+String.valueOf(counterPoly));
-						if(pathStarted)
+						for (int i = 0; i < counterPoly; i++) 
 						{
-						options.add(new PolylineOptions()
-						.width(20)
-						.color(Color.GREEN));
-						}
-						if(followingStarted)
-						{
-						options.add(new PolylineOptions()
-						.width(20)
-						.color(Color.BLUE));
-						}
-						Log.d("polyShapeGet-3.1", String.valueOf(counterPoly));
-						JSONObject pol = new JSONObject(
-								polys.getString("poly"+i));
-						Log.d("polyShapeGet-3.2", String.valueOf(counterPoly));
-						polyType.add(Integer.valueOf(pol.getString("polyType")));
-						Log.d("polytype:", String.valueOf(polyType));
-						JSONObject points = new JSONObject(
-								pol.getString("points"));
-						for (int j = 0; j < polyType.get(i); j++) {
-							JSONObject pointIs = new JSONObject(
-									points.getString("point"+j+"is"));
-							//JSONObject point2Is = new JSONObject(
-								//	points.getString("point"+(j+1)+"is"));
-							Log.d("polyShapeGet-3.3", String.valueOf(counterPoly));
-							/*Polyline line = map.addPolyline(new PolylineOptions()
-						     .add(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))),new LatLng(Double.valueOf(point2Is.getString("lat")),Double.valueOf(pointIs.getString("long"))))
-						     .width(5)
-						     .color(Color.RED));*/
-							
-							options.get(i).add(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))));
-							map.addPolyline(options.get(i));
-							
-							if((j+1 )== polyType.get(i)){							
-								map.addMarker(new MarkerOptions()
-			                     .position(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))))
-			                     .snippet("Lat: "+Double.valueOf(pointIs.getString("lat"))+"\nLong:"+Double.valueOf(pointIs.getString("long")))
-			                     .icon(BitmapDescriptorFactory.fromResource(R.drawable.middlepointblue))
-			                     .anchor(0.5f, 0.5f));
-							}
-							else
+							Log.d("polyShapeGet-2", "i="+String.valueOf(i)+" "+String.valueOf(counterPoly));
+							if(pathStarted)
 							{
-								map.addMarker(new MarkerOptions()
-			                     .position(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))))
-			                     .snippet("Lat: "+Double.valueOf(pointIs.getString("lat"))+"\nLong:"+Double.valueOf(pointIs.getString("long")))
-			                     .icon(BitmapDescriptorFactory.fromResource(R.drawable.middlepoint))
-			                     .anchor(0.5f, 0.5f));
-								
+							options.add(new PolylineOptions()
+							.width(20)
+							.color(Color.GREEN));
 							}
+							if(followingStarted)
+							{
+							options.add(new PolylineOptions()
+							.width(20)
+							.color(Color.BLUE));
+							}
+							Log.d("polyShapeGet-3.1", String.valueOf(counterPoly));
+							JSONObject pol = new JSONObject(
+									polys.getString("poly"+i));
+							Log.d("polyShapeGet-3.2", String.valueOf(counterPoly));
+							polyType.add(Integer.valueOf(pol.getString("polyType")));
+							Log.d("polytype:", String.valueOf(polyType));
+							JSONObject points = new JSONObject(
+									pol.getString("points"));
+							for (int j = 0; j < polyType.get(i); j++) {
+								JSONObject pointIs = new JSONObject(
+										points.getString("point"+j+"is"));
+								//JSONObject point2Is = new JSONObject(
+									//	points.getString("point"+(j+1)+"is"));
+								Log.d("polyShapeGet-3.3", String.valueOf(counterPoly));
+								/*Polyline line = map.addPolyline(new PolylineOptions()
+							     .add(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))),new LatLng(Double.valueOf(point2Is.getString("lat")),Double.valueOf(pointIs.getString("long"))))
+							     .width(5)
+							     .color(Color.RED));*/
+								
+								options.get(i).add(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))));
+								map.addPolyline(options.get(i));
+								
+								if((j+1 )== polyType.get(i)){							
+									map.addMarker(new MarkerOptions()
+				                     .position(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))))
+				                     .snippet("Lat: "+Double.valueOf(pointIs.getString("lat"))+"\nLong:"+Double.valueOf(pointIs.getString("long")))
+				                     .icon(BitmapDescriptorFactory.fromResource(R.drawable.middlepointblue))
+				                     .anchor(0.5f, 0.5f));
+								}
+								else
+								{
+									map.addMarker(new MarkerOptions()
+				                     .position(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))))
+				                     .snippet("Lat: "+Double.valueOf(pointIs.getString("lat"))+"\nLong:"+Double.valueOf(pointIs.getString("long")))
+				                     .icon(BitmapDescriptorFactory.fromResource(R.drawable.middlepoint))
+				                     .anchor(0.5f, 0.5f));
+									
+								}
+								
+								 builder.include(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))));
+							}
+						}
+						if(counterPoly>0)
+						{
+							if(mCurrentLocation!=null)
+							{
+								double i = (double) mCurrentLocation.getLatitude();
+					        	double j = (double) mCurrentLocation.getLongitude();
+					        	builder.include(new LatLng(i,j));
+				        	}
 							
-							 builder.include(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))));
+							LatLngBounds bounds = builder.build();
+					        int padding = 100; // offset from edges of the map
+					                                            // in pixels
+					        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
+					                padding);
+					        map.moveCamera(update);
 						}
 					}
-					if(counterPoly>0)
-					{
-						if(mCurrentLocation!=null)
-						{
-							double i = (double) mCurrentLocation.getLatitude();
-				        	double j = (double) mCurrentLocation.getLongitude();
-				        	builder.include(new LatLng(i,j));
-			        	}
-						
-						LatLngBounds bounds = builder.build();
-				        int padding = 100; // offset from edges of the map
-				                                            // in pixels
-				        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
-				                padding);
-				        map.moveCamera(update);
-					}
+				} 
+				catch (JSONException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+					System.out.println(e1);
 				}
-			} 
-			catch (JSONException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-				System.out.println(e1);
 			}
 				
 			}
-			
+		protected void onCancelled (String result){
+			super.onCancelled(result);
+		}
 			
 		
 			/*if (result!=null){
@@ -921,6 +957,13 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
     public void onBackPressed() {
     	if(myTask!=null)
 			myTask.cancel(true);
+		
+    	Button startPath = (Button) findViewById(R.id.btnStartPath);
+		startPath.getBackground().setColorFilter(new LightingColorFilter(0xffcccccc, 0xff000000));
+		
+		Button followFriends = (Button) findViewById(R.id.btnFollowFriends);
+		followFriends.getBackground().setColorFilter(new LightingColorFilter(0xffcccccc, 0xff000000));
+		
     	Intent intent = new Intent(FollowMe.this,PalMenu.class);
     	intent.putExtra(EXTRA_MESSAGE, userName);
     	intent.putExtra(USER_ID, userID);

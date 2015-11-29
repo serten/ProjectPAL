@@ -1487,6 +1487,21 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			// TODO Auto-generated method stub
 
     		try {
+    			//distance can not be resolved as string to integer because it includes "m" or "Km" characters
+    			//we need to get rid of that part, Suleyman 
+    			int d=arg0[0].length();
+    			String n=null;
+    			if (arg0[0].contains("Km"))
+    			{
+    				n=arg0[0].substring(0, d-2);
+    				n+="000";
+    			}
+    			else if (arg0[0].contains("m"))
+    			{
+    				n=arg0[0].substring(0, d-1);
+    			}
+    			arg0[0]=n;
+    			
     			String strURL="http://54.187.253.246/selectuser/distance_alertZone.php?userID="+userID+"&distance="+arg0[0];
     			Log.d("Link-f",strURL);
 				StringBuilder url = new StringBuilder(strURL);
@@ -1510,23 +1525,30 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				if (status == 200) {
 					HttpEntity e = r.getEntity();				
 					data = EntityUtils.toString(e);
-					explrObject = new JSONObject(data);
-
-					int numberOfFriendsReturned = Integer.valueOf(explrObject.getString("numberOfFriendsReturned"));
-					ArrayList<String> oneRow;
-					for (int i = 1; i <= numberOfFriendsReturned; i++) {
-						oneRow = new ArrayList<String>();
-						oneRow.add(explrObject.getString("name"+String.valueOf(i)));
-						oneRow.add(explrObject.getString("lat"+String.valueOf(i)));
-						oneRow.add(explrObject.getString("long"+String.valueOf(i)));
-						oneRow.add(explrObject.getString("friendUpdateTime"+String.valueOf(i)));
-						
-						knnFriends.add(oneRow);
+					if(data.contains("An error occurred"))
+					{
+						return null;
 					}
-					oneRow = new ArrayList<String>();
-					oneRow.add(arg0[0]);
-					knnFriends.add(oneRow);					
-					return knnFriends;
+					else
+					{
+						explrObject = new JSONObject(data);
+	
+						int numberOfFriendsReturned = Integer.valueOf(explrObject.getString("numberOfFriendsReturned"));
+						ArrayList<String> oneRow;
+						for (int i = 1; i <= numberOfFriendsReturned; i++) {
+							oneRow = new ArrayList<String>();
+							oneRow.add(explrObject.getString("name"+String.valueOf(i)));
+							oneRow.add(explrObject.getString("lat"+String.valueOf(i)));
+							oneRow.add(explrObject.getString("long"+String.valueOf(i)));
+							oneRow.add(explrObject.getString("friendUpdateTime"+String.valueOf(i)));
+							
+							knnFriends.add(oneRow);
+						}
+						oneRow = new ArrayList<String>();
+						oneRow.add(arg0[0]);
+						knnFriends.add(oneRow);					
+						return knnFriends;
+					}
 					
 				} else {
 					Toast.makeText(AlertZone.this, "Error Occured",
@@ -1549,45 +1571,52 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		
 		
 		protected void onPostExecute(ArrayList<ArrayList<String>> result) { // Z
-			
-			if (Integer.valueOf(result.get(result.size()-1).get(0))>result.size())
-				Toast.makeText(AlertZone.this,
-						"Ooops, there are only \""+String.valueOf(result.size()-1)+"\" friends available.",
-						Toast.LENGTH_SHORT).show();
-			for (int i = 0; i < result.size()-1; i++) {
+			if(result!=null)
+			{
+				if (Integer.valueOf(result.get(result.size()-1).get(0))>result.size())
+					Toast.makeText(AlertZone.this,
+							"Ooops, there are only \""+String.valueOf(result.size()-1)+"\" friends available.",
+							Toast.LENGTH_SHORT).show();
+				for (int i = 0; i < result.size()-1; i++) {
+					
+					double lat = Double.valueOf(result.get(i).get(1));
+					double lng = Double.valueOf(result.get(i).get(2));
+					Log.d("Error-ins-f", "3");					
+					String lastTime = result.get(i).get(3);
+					Log.d("Error-ins-f", "4");
+					LatLng ll = new LatLng(lat, lng);
+					String nameOfKFriend = result.get(i).get(0);
+					
+					MarkerOptions options = new MarkerOptions()
+					.title(nameOfKFriend+" is "+String.valueOf(i))
+					.anchor(0.5f, 0.5f)
+					.snippet(lastTime)
+					.position(ll)
+					.icon(BitmapDescriptorFactory.fromResource(R.drawable.friendthumb)).anchor(0.5f, 0.5f).draggable(false);
 				
-				double lat = Double.valueOf(result.get(i).get(1));
-				double lng = Double.valueOf(result.get(i).get(2));
-				Log.d("Error-ins-f", "3");					
-				String lastTime = result.get(i).get(3);
-				Log.d("Error-ins-f", "4");
-				LatLng ll = new LatLng(lat, lng);
-				String nameOfKFriend = result.get(i).get(0);
+					kNNFriendsMarkers.add(map.addMarker(options));
+				}
 				
-				MarkerOptions options = new MarkerOptions()
-				.title(nameOfKFriend+" is "+String.valueOf(i))
-				.anchor(0.5f, 0.5f)
-				.snippet(lastTime)
-				.position(ll)
-				.icon(BitmapDescriptorFactory.fromResource(R.drawable.friendthumb)).anchor(0.5f, 0.5f).draggable(false);
+				LatLngBounds.Builder builder = new LatLngBounds.Builder();
+				for (Marker m : kNNFriendsMarkers) {
+		            builder.include(m.getPosition());
+		        }
 			
-				kNNFriendsMarkers.add(map.addMarker(options));
+		        if (kNNFriendsMarkers.size()!=0){
+					LatLngBounds bounds = builder.build();
+			        int padding = 25; // offset from edges of the map
+			                                            // in pixels
+			        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
+			                padding);
+			        map.moveCamera(update);
+					map2.moveCamera(update);
+		        }
 			}
-			
-			LatLngBounds.Builder builder = new LatLngBounds.Builder();
-			for (Marker m : kNNFriendsMarkers) {
-	            builder.include(m.getPosition());
-	        }
-		
-	        if (kNNFriendsMarkers.size()!=0){
-				LatLngBounds bounds = builder.build();
-		        int padding = 25; // offset from edges of the map
-		                                            // in pixels
-		        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
-		                padding);
-		        map.moveCamera(update);
-				map2.moveCamera(update);
-	        }
+			else
+			{
+				Toast.makeText(AlertZone.this,
+						"Ooops, There is no friend available.",Toast.LENGTH_SHORT).show();			
+			}
 		}
 
 		protected void onCancelled (ArrayList<ArrayList<String>> result){
@@ -1843,23 +1872,30 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 				if (status == 200) {
 					HttpEntity e = r.getEntity();				
 					data = EntityUtils.toString(e);
-					explrObject = new JSONObject(data);
-
-					int numberOfFriendsReturned = Integer.valueOf(explrObject.getString("numberOfFriendsReturned"));
-					ArrayList<String> oneRow;
-					for (int i = 1; i <= numberOfFriendsReturned; i++) {
-						oneRow = new ArrayList<String>();
-						oneRow.add(explrObject.getString("name"+String.valueOf(i)));
-						oneRow.add(explrObject.getString("lat"+String.valueOf(i)));
-						oneRow.add(explrObject.getString("long"+String.valueOf(i)));
-						oneRow.add(explrObject.getString("friendUpdateTime"+String.valueOf(i)));
-						
-						knnFriends.add(oneRow);
+					if(data.contains("An error occurred"))
+					{
+						return null;
 					}
-					oneRow = new ArrayList<String>();
-					oneRow.add(arg0[0]);
-					knnFriends.add(oneRow);					
-					return knnFriends;
+					else
+					{
+						explrObject = new JSONObject(data);
+	
+						int numberOfFriendsReturned = Integer.valueOf(explrObject.getString("numberOfFriendsReturned"));
+						ArrayList<String> oneRow;
+						for (int i = 1; i <= numberOfFriendsReturned; i++) {
+							oneRow = new ArrayList<String>();
+							oneRow.add(explrObject.getString("name"+String.valueOf(i)));
+							oneRow.add(explrObject.getString("lat"+String.valueOf(i)));
+							oneRow.add(explrObject.getString("long"+String.valueOf(i)));
+							oneRow.add(explrObject.getString("friendUpdateTime"+String.valueOf(i)));
+							
+							knnFriends.add(oneRow);
+						}
+						oneRow = new ArrayList<String>();
+						oneRow.add(arg0[0]);
+						knnFriends.add(oneRow);					
+						return knnFriends;
+					}
 					
 				} else {
 					Toast.makeText(AlertZone.this, "Error Occured",
@@ -1883,44 +1919,52 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 		
 		protected void onPostExecute(ArrayList<ArrayList<String>> result) { // Z
 			
-			if (Integer.valueOf(result.get(result.size()-1).get(0))>result.size())
-				Toast.makeText(AlertZone.this,
-						"Ooops, there are only \""+String.valueOf(result.size()-1)+"\" friends available.",
-						Toast.LENGTH_SHORT).show();
-			for (int i = 0; i < result.size()-1; i++) {
+			if(result!=null)
+			{
+				if (Integer.valueOf(result.get(result.size()-1).get(0))>result.size())
+					Toast.makeText(AlertZone.this,
+							"Ooops, there are only \""+String.valueOf(result.size()-1)+"\" friends available.",
+							Toast.LENGTH_SHORT).show();
+				for (int i = 0; i < result.size()-1; i++) {
+					
+					double lat = Double.valueOf(result.get(i).get(1));
+					double lng = Double.valueOf(result.get(i).get(2));
+					Log.d("Error-ins-f", "3");					
+					String lastTime = result.get(i).get(3);
+					Log.d("Error-ins-f", "4");
+					LatLng ll = new LatLng(lat, lng);
+					String nameOfKFriend = result.get(i).get(0);
+					
+					MarkerOptions options = new MarkerOptions()
+					.title(nameOfKFriend+" is "+String.valueOf(i))
+					.anchor(0.5f, 0.5f)
+					.snippet(lastTime)
+					.position(ll)
+					.icon(BitmapDescriptorFactory.fromResource(R.drawable.friendthumb)).anchor(0.5f, 0.5f).draggable(false);
 				
-				double lat = Double.valueOf(result.get(i).get(1));
-				double lng = Double.valueOf(result.get(i).get(2));
-				Log.d("Error-ins-f", "3");					
-				String lastTime = result.get(i).get(3);
-				Log.d("Error-ins-f", "4");
-				LatLng ll = new LatLng(lat, lng);
-				String nameOfKFriend = result.get(i).get(0);
+					kNNFriendsMarkers.add(map.addMarker(options));
+				}
 				
-				MarkerOptions options = new MarkerOptions()
-				.title(nameOfKFriend+" is "+String.valueOf(i))
-				.anchor(0.5f, 0.5f)
-				.snippet(lastTime)
-				.position(ll)
-				.icon(BitmapDescriptorFactory.fromResource(R.drawable.friendthumb)).anchor(0.5f, 0.5f).draggable(false);
+				LatLngBounds.Builder builder = new LatLngBounds.Builder();
+				for (Marker m : kNNFriendsMarkers) {
+		            builder.include(m.getPosition());
+		        }
 			
-				kNNFriendsMarkers.add(map.addMarker(options));
+		        if (kNNFriendsMarkers.size()!=0){
+					LatLngBounds bounds = builder.build();
+			        int padding = 25; // offset from edges of the map
+			                                            // in pixels
+			        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
+			                padding);
+			        map.moveCamera(update);
+					map2.moveCamera(update);
+		        }
 			}
-			
-			LatLngBounds.Builder builder = new LatLngBounds.Builder();
-			for (Marker m : kNNFriendsMarkers) {
-	            builder.include(m.getPosition());
-	        }
-		
-	        if (kNNFriendsMarkers.size()!=0){
-				LatLngBounds bounds = builder.build();
-		        int padding = 25; // offset from edges of the map
-		                                            // in pixels
-		        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
-		                padding);
-		        map.moveCamera(update);
-				map2.moveCamera(update);
-	        }
+			else
+			{
+				Toast.makeText(AlertZone.this,
+						"Ooops, There is no friend available.",Toast.LENGTH_SHORT).show();			
+			}
 		}
 
 		protected void onCancelled (ArrayList<ArrayList<String>> result){
@@ -2671,7 +2715,7 @@ public class AlertZone extends FragmentActivity implements OnMapReadyCallback,Co
 			                                            // in pixels
 			        CameraUpdate update = CameraUpdateFactory.newLatLngBounds(bounds,
 			                padding);
-			        Toast.makeText(getBaseContext(), notificationData,Toast.LENGTH_SHORT).show();
+			        Toast.makeText(AlertZone.this, notificationData,Toast.LENGTH_SHORT).show();
 			        map.animateCamera(update);
 					map2.animateCamera(update);
 		        }

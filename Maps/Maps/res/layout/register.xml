@@ -5,55 +5,60 @@
      android:background="@drawable/chicago"
     android:orientation="vertical" >
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/chicago"
-        android:orientation="vertical" >
-
- 	<EditText
- 	    android:id="@+id/reg_url"
- 	    android:layout_width="fill_parent"
- 	    android:layout_height="wrap_content"
- 	    android:layout_alignParentTop="true"
- 	    android:editable="false"
- 	    android:enabled="false"
- 	    android:inputType="textUri"
- 	    android:text="@string/str_reg_url"
- 	    android:textSize="10.0sp" />
- 	
         <TextView
-            android:id="@+id/textView1"
+            android:id="@+id/textView2"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="Enter Username" />
+            android:layout_alignLeft="@+id/regusername"
+            android:layout_alignRight="@+id/regusername"
+            android:layout_below="@+id/regusername"
+            android:text="Enter Password:" />
 
         <EditText
             android:id="@+id/regusername"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:ems="10" >
-        </EditText>
-
-        <TextView
-            android:id="@+id/textView2"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Enter Password" />
+            android:layout_alignLeft="@+id/textView1"
+            android:layout_alignRight="@+id/textView1"
+            android:layout_below="@+id/textView1"
+            android:ems="10" />
 
         <EditText
             android:id="@+id/regpassword"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:inputType="textPassword"
-            android:ems="10" />
+            android:layout_alignLeft="@+id/textView2"
+            android:layout_alignRight="@+id/textView2"
+            android:layout_below="@+id/textView2"
+            android:ems="10"
+            android:inputType="textPassword" />
 
-        <Button
-            android:id="@+id/regbutton"
+        <TextView
+            android:id="@+id/textView1"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="Register" />
+            android:layout_alignLeft="@+id/imageView1"
+            android:layout_alignParentTop="true"
+            android:layout_alignRight="@+id/imageView1"
+            android:layout_marginTop="125dp"
+            android:text="Enter Username:" />
 
-    </LinearLayout>
+        <ImageView
+            android:id="@+id/imageView1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/textView1"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="27dp"
+            android:src="@drawable/palbrand" />
+
+        <ImageView
+            android:id="@+id/registerButtoninRegisterPage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignRight="@+id/imageView1"
+            android:layout_below="@+id/regpassword"
+            android:layout_marginTop="18dp"
+            android:src="@drawable/register" />
 
 </RelativeLayout>

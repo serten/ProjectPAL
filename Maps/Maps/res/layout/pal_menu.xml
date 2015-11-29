@@ -15,10 +15,11 @@
 
     <TextView
         android:id="@+id/tVW"
-        android:layout_width="110dp"
+        android:layout_width="match_parent"
         android:layout_height="43dp"
-        android:textSize="11dp"
-        android:text="" />
+        android:gravity="center"
+        android:text=""
+        android:textSize="20dp" />
 
     <Button
         android:id="@+id/button1"

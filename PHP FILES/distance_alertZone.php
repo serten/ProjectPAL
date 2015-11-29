@@ -16,7 +16,9 @@ $time = date('H:i:s', time());
 $date = date('Y-m-d')." ".$time;
 // this section creates a table for alertzone information
 
-$result = pg_query($conn, "SELECT P.USERNAME ,ST_Y(P.CURRENTPOSITION), ST_X(P.CURRENTPOSITION), P.LASTUPDATETIME , ST_Distance(ST_Transform(P.CURRENTPOSITION,26986),ST_Transform(P2.CURRENTPOSITION,26986)) FROM FRIENDLIST F,PALUSER P, PALUSER P2 WHERE F.USERID='$u_id' AND P2.USERID='$u_id' AND P.USERID=F.FRIENDID AND ST_Distance(ST_Transform(P.CURRENTPOSITION,26986),ST_Transform(P2.CURRENTPOSITION,26986))<10000 ORDER BY ST_Distance(ST_Transform(P.CURRENTPOSITION,26986),ST_Transform(P2.CURRENTPOSITION,26986)) ASC;");	
+$result = pg_query($conn, "SELECT P.USERNAME ,ST_Y(P.CURRENTPOSITION), ST_X(P.CURRENTPOSITION), P.LASTUPDATETIME , ST_Distance(ST_Transform(P.CURRENTPOSITION,26986),ST_Transform(P2.CURRENTPOSITION,26986)) ".
+                          "FROM FRIENDLIST F,PALUSER P, PALUSER P2 WHERE F.USERID='$u_id' AND P2.USERID='$u_id' AND P.USERID=F.FRIENDID AND ST_Distance(ST_Transform(P.CURRENTPOSITION,26986),ST_Transform(P2.CURRENTPOSITION,26986))<$distance ".
+						  "ORDER BY ST_Distance(ST_Transform(P.CURRENTPOSITION,26986),ST_Transform(P2.CURRENTPOSITION,26986)) ASC;");	
 $num = pg_num_rows($result);
 	
 if (!(0<$num)) {

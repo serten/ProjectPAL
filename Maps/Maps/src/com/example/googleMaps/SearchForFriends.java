@@ -92,7 +92,7 @@ public class SearchForFriends extends ListActivity {
 	                    String url="http://54.187.253.246/selectuser/searchFriends_postgre.php";
 	                    networkTask.execute(url);
                 }else{
-                    Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SearchForFriends.this, "Network is not Available", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -180,7 +180,7 @@ public class SearchForFriends extends ListActivity {
 	            
 	            Log.d("7Error", "7");
 	            if (result.contains("denied")){
-	            	
+	            	idsArray=null;
 	            	String[] parts={"NO RESULT"};
 	            	createList(parts);
 	            }
@@ -215,6 +215,9 @@ public class SearchForFriends extends ListActivity {
 	            /** Showing a message, on completion of download process */
 	            //Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
 	        }
+			protected void onCancelled (String result){
+				super.onCancelled(result);
+			}
 	    } 
 	 
 	 public void createList(String[] parts)
@@ -228,6 +231,7 @@ public class SearchForFriends extends ListActivity {
 		protected void onListItemClick(ListView l, View v, int position, long id) {
 
 			//get selected items
+		 if(idsArray!=null){
 		 	addFriendID=""+idsArray[position];
 			//String selectedValue = (String) getListAdapter().getItem(position);
 			//Toast.makeText(this, addFriendID, Toast.LENGTH_SHORT).show();
@@ -237,7 +241,7 @@ public class SearchForFriends extends ListActivity {
 	            /** Starting the task created above */
 	            String url="http://54.187.253.246/selectuser/addFriend_postgre.php";
 	            addFriendTask.execute(url);
-
+		 }
 
 		}
 	 
@@ -331,16 +335,17 @@ public class SearchForFriends extends ListActivity {
 	            
 	            if (result.contains("ALREADY A FRIEND")){
 	            	
-	            	Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+	            	
+	            	Toast.makeText(SearchForFriends.this, "ALREADY A FRIEND", Toast.LENGTH_SHORT).show();
 	            }
 	            else if (result.contains("denied"))
 	            {
-	            	Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+	            	Toast.makeText(SearchForFriends.this, "Denied", Toast.LENGTH_SHORT).show();
 	            }
 	            else
 	            {
 	            	
-	            	Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+	            	Toast.makeText(SearchForFriends.this, "New Record Created Successfully", Toast.LENGTH_SHORT).show();
 	            	Intent intent = new Intent(SearchForFriends.this, ListOfFriends.class);
 	        		intent.putExtra(EXTRA_MESSAGE, userName);
 	        		intent.putExtra(USER_ID, userID);
@@ -351,6 +356,9 @@ public class SearchForFriends extends ListActivity {
 	            /** Showing a message, on completion of download process */
 	            //Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
 	        }
+			protected void onCancelled (String result){
+				super.onCancelled(result);
+			}
 	    } 
 	
 }

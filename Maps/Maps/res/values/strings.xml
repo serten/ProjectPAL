@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Maps</string>
+    <string name="app_name">Pal Hunter</string>
     <string name="hello_world">Hello world!</string>
     <string name="aboutme">Heyyyy, I am Kevin Noury, a Phd student of mechanical engineering and also I am studying in computer science master\'s program at USC. I like to develop apps that have practical uses for people. This app helps you take a look at the addressee\'s house and evaluate the property\'s real estate features. I hope you enjoy using this app.</string>
     <string name="action_settings">Settings</string>

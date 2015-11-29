@@ -30,6 +30,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.Signature;
 import android.graphics.Color;
+import android.graphics.LightingColorFilter;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -95,7 +96,7 @@ public class PalMenu extends Activity{
         
         TextView tVW = (TextView) findViewById(R.id.tVW);
         tVW.setTextColor(Color.RED);
-        tVW.setText("Welcome "+userName);
+        tVW.setText(userName);
 
         
         /** Defining a click event listener for the button */
@@ -103,6 +104,8 @@ public class PalMenu extends Activity{
  
             @Override
             public void onClick(View v) {
+            	Button btnAlertZone = (Button) findViewById(R.id.alertZone);
+            	btnAlertZone.setBackgroundColor(0xff888888);
                 if(isNetworkAvailable()){
                     /** Getting a reference to Edit text containing url */
                 	Intent results = new Intent(PalMenu.this, AlertZone.class);
@@ -111,7 +114,7 @@ public class PalMenu extends Activity{
     				startActivity(results);
     				
                 }else{
-                    Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(PalMenu.this, "Network is not Available", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -121,6 +124,8 @@ public class PalMenu extends Activity{
        	 
             @Override
             public void onClick(View v) {
+            	 Button aboutDev = (Button) findViewById(R.id.aboutDev);
+            	 aboutDev.setBackgroundColor(0xff888888);
                 if(isNetworkAvailable()){
                     /** Getting a reference to Edit text containing url */
                 	Intent results = new Intent(PalMenu.this, AboutDev.class);
@@ -129,7 +134,7 @@ public class PalMenu extends Activity{
     				startActivity(results);
     				
                 }else{
-                    Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(PalMenu.this, "Network is not Available", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -139,6 +144,8 @@ public class PalMenu extends Activity{
           	 
             @Override
             public void onClick(View v) {
+            	  Button listOfFriends = (Button) findViewById(R.id.listOfFriends);
+            	  listOfFriends.setBackgroundColor(0xff888888);
                 if(isNetworkAvailable()){
                     /** Getting a reference to Edit text containing url */
                 	Intent results = new Intent(PalMenu.this, ListOfFriends.class);
@@ -148,7 +155,7 @@ public class PalMenu extends Activity{
     				startActivity(results);
     				
                 }else{
-                    Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(PalMenu.this, "Network is not Available", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -158,6 +165,8 @@ public class PalMenu extends Activity{
          	 
             @Override
             public void onClick(View v) {
+            	Button followMe = (Button) findViewById(R.id.followMe);
+            	followMe.setBackgroundColor(0xff888888);
                 if(isNetworkAvailable()){
                     /** Getting a reference to Edit text containing url */
                 	Intent results = new Intent(PalMenu.this, FollowMe.class);
@@ -166,7 +175,7 @@ public class PalMenu extends Activity{
     				startActivity(results);
     				
                 }else{
-                    Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(PalMenu.this, "Network is not Available", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -319,11 +328,11 @@ public class PalMenu extends Activity{
 	            
 	            Log.d("7Error", "7");
 	            if (result.contains("denied")){	            	
-	            	Toast.makeText(getBaseContext(), "CURRENT POSITION CAN NOT UPDATE!", Toast.LENGTH_SHORT).show();
+	            	Toast.makeText(PalMenu.this, "CURRENT POSITION CAN NOT UPDATE!", Toast.LENGTH_SHORT).show();
 	            }
 	            else
 	            {
-	            	Toast.makeText(getBaseContext(), "CURRENT POSITION UPDATED", Toast.LENGTH_SHORT).show();
+	            	Toast.makeText(PalMenu.this, "CURRENT POSITION UPDATED", Toast.LENGTH_SHORT).show();
 	            }
 	            /** Showing a message, on completion of download process */
 	            //Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();

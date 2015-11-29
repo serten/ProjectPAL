@@ -98,7 +98,7 @@ public class ListOfFriends extends ListActivity{
     				//onPause();
     				finish();
                 }else{
-                    Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ListOfFriends.this, "Network is not Available", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -220,8 +220,9 @@ public class ListOfFriends extends ListActivity{
 	        * downloaded image
 	        */
 	    	
-	    	if(result.contains("denied"))
+	    	if(result.length()<9)
 	    	{
+	    		idsArray=null;
 	    		String[] parts={"NO RESULT"};
             	createList(parts);
 	    		
@@ -234,7 +235,7 @@ public class ListOfFriends extends ListActivity{
             	
             	for(int i = 0; i<parts.length/2;i++)
             	{
-            		  names.add(parts[i]);  		
+            		  names.add((i+1)+". "+parts[i]);  		
             	
             	}
             	String[] namesArray = new String[names.size()];
@@ -258,20 +259,26 @@ public class ListOfFriends extends ListActivity{
 	    	/** Showing a message, on completion of download process */
 	        //Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
 	    }
+		protected void onCancelled (String result){
+			super.onCancelled(result);
+		}
 	}
 
 	 @Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 
 		//get selected items
-		deleteFriendID=""+idsArray[position];
-		//String selectedValue = (String) getListAdapter().getItem(position);
-		//Toast.makeText(this, deleteFriendID, Toast.LENGTH_SHORT).show();
-		DeleteFriendTask  deleteFriendTask = new  DeleteFriendTask();
-         
-        /** Starting the task created above */
-        String url="http://54.187.253.246/selectuser/deleteFriend_postgre.php";
-        deleteFriendTask.execute(url);
+		if(idsArray!=null)
+		{
+			deleteFriendID=""+idsArray[position];
+			//String selectedValue = (String) getListAdapter().getItem(position);
+			//Toast.makeText(this, deleteFriendID, Toast.LENGTH_SHORT).show();
+			DeleteFriendTask  deleteFriendTask = new  DeleteFriendTask();
+	         
+	        /** Starting the task created above */
+	        String url="http://54.187.253.246/selectuser/deleteFriend_postgre.php";
+	        deleteFriendTask.execute(url);
+		}
 
 	}	
 	
@@ -348,7 +355,7 @@ public class ListOfFriends extends ListActivity{
 	            */ 
 	        	if (result.contains("Record deleted successfully"))
 	            {	            	
-	            		Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+	            		Toast.makeText(ListOfFriends.this, "Record deleted successfully", Toast.LENGTH_SHORT).show();
 	            		Intent intent = new Intent(ListOfFriends.this, ListOfFriends.class);
 	            		intent.putExtra(EXTRA_MESSAGE, userName);
 	            		intent.putExtra(USER_ID, userID);
@@ -357,10 +364,13 @@ public class ListOfFriends extends ListActivity{
 	            }
 	        	else
 	        	{
-	            	Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+	            	Toast.makeText(ListOfFriends.this, result, Toast.LENGTH_SHORT).show();
 	        	}	
 	            /** Showing a message, on completion of download process */
 	            //Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
 	        }
+			protected void onCancelled (String result){
+				super.onCancelled(result);
+			}
 	    }
 }

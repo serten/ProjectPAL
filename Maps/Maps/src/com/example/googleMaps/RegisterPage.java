@@ -21,6 +21,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -54,8 +55,10 @@ public class RegisterPage extends Activity {
 	    textView.setText(message);
 
 	    // Set the text view as the activity layout
-	    setContentView(R.layout.activity_register_page);
-	    Button regbutton = (Button) findViewById(R.id.regbutton);
+	    setContentView(R.layout.register);
+	    ImageView regbutton = (ImageView) findViewById(R.id.registerButtoninRegisterPage);
+	    
+	    
 	    
         /** Setting Click listener for the download button */
         regbutton.setOnClickListener( new OnClickListener() {
@@ -66,7 +69,7 @@ public class RegisterPage extends Activity {
             	
                 if(regisNetworkAvailable()){
                     /** Getting a reference to Edit text containing url */
-                    EditText etUrl = (EditText) findViewById(R.id.reg_url);
+                    //EditText etUrl = (EditText) findViewById(R.id.reg_url);
                     EditText e=(EditText) findViewById(R.id.regusername);
                     regusername=e.getText().toString();
                     e=(EditText) findViewById(R.id.regpassword);
@@ -75,10 +78,10 @@ public class RegisterPage extends Activity {
                     RegTask downloadTask = new RegTask();
                    
                     /** Starting the task created above */
-                    downloadTask.execute(etUrl.getText().toString());
+                    downloadTask.execute("http://54.187.253.246/selectuser/register_postgre.php");
 
                 }else{
-                    Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(RegisterPage.this, "Network is not Available", Toast.LENGTH_SHORT).show();
                 }
 			}
         });
@@ -171,7 +174,7 @@ public class RegisterPage extends Activity {
 	            /** Showing a message, on completion of download process */
 	        	if (result.contains("Denied"))
 	        	{
-	        		Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+	        		Toast.makeText(RegisterPage.this, result, Toast.LENGTH_SHORT).show();
 	        		EditText e=(EditText) findViewById(R.id.regusername);
                     e.setText("");
                     e=(EditText) findViewById(R.id.regpassword);
@@ -179,7 +182,7 @@ public class RegisterPage extends Activity {
 	        	}
 	        	else
 	        	{
-	        		Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+	        		Toast.makeText(RegisterPage.this, result, Toast.LENGTH_SHORT).show();
 		            closethis();
 	        	}
 	            

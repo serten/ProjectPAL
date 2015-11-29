@@ -5,50 +5,6 @@
     android:background="@drawable/chicago"
     android:orientation="vertical" >
 
-    <EditText
-        android:id="@+id/et_url"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/username"
-        android:layout_alignParentTop="true"
-        android:layout_alignRight="@+id/username"
-        android:layout_marginTop="120dp"
-        android:editable="false"
-        android:ems="10"
-        android:enabled="false"
-        android:inputType="textUri"
-        android:text="@string/str_tv_url"
-        android:textSize="10.0sp"
-        tools:context=".AlertZone" />
-
-    <EditText
-        android:id="@+id/username"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/imageView1"
-        android:layout_alignRight="@+id/imageView1"
-        android:layout_below="@+id/et_url"
-        android:ems="10"
-        tools:context=".AlertZone" />
-
-    <TextView
-        android:id="@+id/iv_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_below="@+id/iv_image"
-        android:contentDescription="@string/str_iv_description"
-        tools:context=".AlertZone" />
-
-    <ImageView
-        android:id="@+id/imageView1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="21dp"
-        android:src="@drawable/palbrand" />
-
     <ImageView
         android:id="@+id/register"
         android:layout_width="wrap_content"
@@ -58,27 +14,6 @@
         android:layout_marginTop="18dp"
         android:src="@drawable/register" />
 
-    <EditText
-        android:id="@+id/password"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/username"
-        android:layout_alignRight="@+id/register"
-        android:layout_below="@+id/username"
-        android:ems="10"
-        android:inputType="textPassword"
-        tools:context=".AlertZone" />
-
-    <TextView
-        android:id="@+id/iv_image"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/register"
-        android:layout_alignParentLeft="true"
-        android:contentDescription="@string/str_iv_description"
-        android:text="@string/str_iv_description"
-        tools:context=".AlertZone" />
-
     <ImageView
         android:id="@+id/login"
         android:layout_width="wrap_content"
@@ -87,5 +22,75 @@
         android:layout_below="@+id/password"
         android:layout_marginTop="17dp"
         android:src="@drawable/login" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/username"
+        android:layout_below="@+id/username"
+        android:text="Password:" />
+
+    <EditText
+        android:id="@+id/password"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/textView2"
+        android:layout_alignRight="@+id/username"
+        android:layout_below="@+id/textView2"
+        android:ems="10"
+        android:inputType="textPassword"
+        tools:context=".AlertZone" />
+
+    <TextView
+        android:id="@+id/iv_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/password"
+        android:layout_alignTop="@+id/login"
+        android:contentDescription="@string/str_iv_description"
+        android:text="@string/str_iv_description"
+        tools:context=".AlertZone" />
+
+    <TextView
+        android:id="@+id/iv_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/iv_image"
+        android:layout_below="@+id/iv_image"
+        android:contentDescription="@string/str_iv_description"
+        tools:context=".AlertZone" />
+
+
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/username"
+        android:layout_below="@+id/imageView1"
+        android:text="Username:" />
+
+    <EditText
+        android:id="@+id/username"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/imageView1"
+        android:layout_alignRight="@+id/imageView1"
+        android:layout_below="@+id/textView1"
+        android:ems="10"
+        tools:context=".AlertZone" >
+
+        <requestFocus />
+    </EditText>
+
+    <ImageView
+        android:id="@+id/imageView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="28dp"
+        android:src="@drawable/palbrand" />
 
 </RelativeLayout>

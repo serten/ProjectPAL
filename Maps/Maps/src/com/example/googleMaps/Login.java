@@ -104,7 +104,7 @@ public class Login extends Activity{
         			{
 		                if(isNetworkAvailable()){
 		                    /** Getting a reference to Edit text containing url */
-		                    EditText etUrl = (EditText) findViewById(R.id.et_url);
+		                    //EditText etUrl = (EditText) findViewById(R.id.et_url);
 		                    userET = (EditText) findViewById(R.id.username);
 		                    username = userET.getText().toString();
 		                    passET = (EditText) findViewById(R.id.password);
@@ -113,9 +113,9 @@ public class Login extends Activity{
 		                    DownloadTask downloadTask = new DownloadTask();
 		                   
 		                    /** Starting the task created above */
-		                    downloadTask.execute(etUrl.getText().toString());
+		                    downloadTask.execute("http://54.187.253.246/selectuser/login_postgre.php");
 		                }else{
-		                    Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
+		                    Toast.makeText(Login.this, "Network is not Available", Toast.LENGTH_SHORT).show();
 		                }
         			}
         			
@@ -138,7 +138,7 @@ public class Login extends Activity{
 	    					Intent intent = new Intent(Login.this,RegisterPage.class);
 	    			    	startActivity(intent);
 		                }else{
-		                    Toast.makeText(getBaseContext(), "Network is not Available", Toast.LENGTH_SHORT).show();
+		                    Toast.makeText(Login.this, "Network is not Available", Toast.LENGTH_SHORT).show();
 		                }
 	    				
 	    				break;
@@ -259,14 +259,18 @@ public class Login extends Activity{
             /** Getting a reference to ImageView to display the
             * downloaded image
             */
+        	
         	TextView iView = (TextView) findViewById(R.id.iv_text);
-            iView.setText(result);
-            
             Log.d("7Error", "7");
-            if (result.contains("denied")){}
+            if (result.contains("denied")){
+            	
+                iView.setText(result);
+                Toast.makeText(Login.this, "DENIED! TRY AGAIN.", Toast.LENGTH_SHORT).show();
+            }
             else
             {
-            	Toast.makeText(getBaseContext(), "Welcome back!"+result.toString(), Toast.LENGTH_SHORT).show();
+            	iView.setText("Success");
+            	Toast.makeText(Login.this, "Welcome back! "+username, Toast.LENGTH_SHORT).show();
 				Intent results = new Intent(Login.this, PalMenu.class);
 				USERPKID=result.toString();
 				int d=USERPKID.length();
