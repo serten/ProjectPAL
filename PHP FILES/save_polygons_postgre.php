@@ -17,7 +17,7 @@ for ($j = 0; $j<$polyType ;$j++ )
 	$coordinates=[];
 	$lat = $_GET["point".$j."lat"];	
 	$long = $_GET["point".$j."long"];
-	array_push($coordinates,$lat,$long);	
+	array_push($coordinates,$long,$lat);	
 	
 	array_push($polygon,$coordinates);			
 }

@@ -31,7 +31,7 @@ function control()
 	$time = date('H:i:s', time()); 
 	$date = date('Y-m-d')." ".$time;
 	
-    $result = pg_query($conn, "UPDATE PALUSER SET CURRENTPOSITION = ST_GeomFromText('POINT($lat $long)', 4326), LASTUPDATETIME =TIMESTAMP'$date' WHERE USERID = '$u_id';");	
+    $result = pg_query($conn, "UPDATE PALUSER SET CURRENTPOSITION = ST_GeomFromText('POINT($long $lat)', 4326), LASTUPDATETIME =TIMESTAMP'$date' WHERE USERID = '$u_id';");	
 	
 	$zoneDeActivateString="UPDATE ALERTZONE SET ZONEACTIVATED=0 WHERE ZONEID IN (SELECT A.ZONEID FROM ALERTZONE AS A, PALUSER AS U ". 
 	"WHERE A.USERID='$u_id' AND U.USERID=A.USERID AND NOT ST_CONTAINS(A.ZONECOORDINATES,U.CURRENTPOSITION))";

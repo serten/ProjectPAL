@@ -41,7 +41,7 @@ while ($row = pg_fetch_row($result)) {
 			$r = json_decode($decodedText, true);
 			//echo "LONG:".$coord[0]."- LAT:".$coord[1]." / ";	
 			//$polyType++;
-			array_push($coordinates,$r["coordinates"][0],$r["coordinates"][1]);
+			array_push($coordinates,$r["coordinates"][1],$r["coordinates"][0]);
 			//echo "</td>";	
 			
 			//$coordinates=[];

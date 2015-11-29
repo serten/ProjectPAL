@@ -19,8 +19,8 @@ echo "<p>USER INFORMATION TABLE</p><table border=\"1\"><tr>
 		<th>USERNAME:</th>
 		<th>PASSWORD:</th>
 		<th>LASTUPDATETIME:</th>
-		<th>LAT:</th>
-		<th>LONG:</th></tr>";
+		<th>LONG:</th>
+		<th>LAT:</th></tr>";
 while ($row = pg_fetch_row($result)) {
   echo "<tr>";
   foreach ($row as &$rr)
@@ -98,8 +98,8 @@ echo "<hr><p>PATH INFORMATION TABLE</p><table border=\"1\"><tr>
 		<th>PATHID:</th>
 		<th>USERID:</th>
 		<th>PATHCREATETIME:</th>
-		<th>PATH - LAT:</th>
-		<th>PATH - LONG:</th></tr>";
+		<th>PATH - LONG:</th>
+		<th>PATH - LAT:</th></tr>";
 while ($row = pg_fetch_row($result)) {
   echo "<tr>";
   foreach ($row as &$rr)

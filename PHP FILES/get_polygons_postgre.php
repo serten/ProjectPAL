@@ -48,7 +48,7 @@ while ($row = pg_fetch_row($result)) {
 			{
 				//echo "LONG:".$coord[0]."- LAT:".$coord[1]." / ";	
 				$polyType++;
-				array_push($coordinates,$coord[0],$coord[1]);
+				array_push($coordinates,$coord[1],$coord[0]);
 			}
 			//echo "</td>";	
 			array_push($main,$coordinates);

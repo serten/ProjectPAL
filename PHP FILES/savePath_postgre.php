@@ -51,8 +51,8 @@ function control()
 	$time = date('H:i:s', time()); 
 	$date = date('Y-m-d')." ".$time;
 	
-	$result = pg_query($conn, "UPDATE PALUSER SET CURRENTPOSITION = ST_GeomFromText('POINT($lat $long)', 4326), LASTUPDATETIME =TIMESTAMP'$date' WHERE USERID = '$u_id';");
-    $result = pg_query($conn, "INSERT INTO PATHPOINTS (USERID, PATHCREATETIME,PATHCOORDINATES)VALUES ('$u_id',TIMESTAMP'$date',ST_GeomFromText('POINT($lat $long)', 4326))");	
+	$result = pg_query($conn, "UPDATE PALUSER SET CURRENTPOSITION = ST_GeomFromText('POINT($long $lat)', 4326), LASTUPDATETIME =TIMESTAMP'$date' WHERE USERID = '$u_id';");
+    $result = pg_query($conn, "INSERT INTO PATHPOINTS (USERID, PATHCREATETIME,PATHCOORDINATES)VALUES ('$u_id',TIMESTAMP'$date',ST_GeomFromText('POINT($long $lat)', 4326))");	
 	$result = pg_query($conn, "DELETE FROM PATHPOINTS  WHERE USERID='$u_id' AND PATHCREATETIME < (TIMESTAMP'$date' - interval '2 minute') ");
 
 	$zoneDeActivateString="UPDATE ALERTZONE SET ZONEACTIVATED=0 WHERE ZONEID IN (SELECT A.ZONEID FROM ALERTZONE AS A, PALUSER AS U ". 
