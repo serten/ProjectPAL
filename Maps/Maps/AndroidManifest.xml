@@ -29,11 +29,15 @@
 
     <application
         android:allowBackup="true"
+        android:theme="@style/AppTheme" 
         android:icon="@drawable/palbrandd"
-        android:theme="@style/AppTheme" >
+        android:label="@string/app_name">
+        
         <activity
             android:name=".Login"
-            android:label="@string/app_name" >
+            android:label="@string/app_name" 
+            android:icon="@drawable/palbrandd">
+            
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -42,13 +46,14 @@
         </activity>
         <activity
             android:name=".RegisterPage"
-            android:label="Register"
-             android:icon="@drawable/registerheader">
+            android:icon="@drawable/register"
+            android:label="">
         </activity>
         <activity
             android:name=".AlertZone"
-            android:label="Alert Zone" 
-            android:launchMode="singleTop">
+            android:launchMode="singleTop"
+			android:icon="@drawable/alertzonetop"
+			android:label="">	
             <intent-filter>
                 <action android:name="com.example.googleMaps.MAIN" />
 
@@ -58,7 +63,8 @@
         </activity>
         <activity
             android:name=".PalMenu"
-            android:label="PalHunter Menu" >
+            android:icon="@drawable/mainmenutop"
+            android:label="">
             <intent-filter>
                 <action android:name="com.example.googleMaps.MAIN" />
 
@@ -67,7 +73,8 @@
         </activity>
         <activity
             android:name=".AboutDev"
-            android:label="About Developres" >
+            android:icon="@drawable/aboutdeveloperstop" 
+            android:label="">
             <intent-filter>
                 <action android:name="com.example.googleMaps.MAIN" />
 
@@ -77,7 +84,8 @@
         
         <activity
             android:name=".ListOfFriends"
-            android:label="Friend's List:" >
+            android:icon="@drawable/listoffriendstop" 
+            android:label="">
             <intent-filter>
                 <action android:name="com.example.googleMaps.MAIN" />
 
@@ -87,13 +95,14 @@
         
         <activity
             android:name=".SearchForFriends"
-            android:label="Search For Friends"
-            >
+            android:icon="@drawable/searchforfriendstop"
+            android:label="">
         </activity>
         
         <activity
             android:name=".FollowMe"
-            android:label="Follow Me!">
+            android:icon="@drawable/followmetop"
+            android:label="">
             <!-- android:uiOptions="splitActionBarWhenNarrow" -->
              
             <intent-filter>
