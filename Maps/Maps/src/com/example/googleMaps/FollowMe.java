@@ -697,6 +697,7 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 							Log.d("polytype:", String.valueOf(polyType));
 							JSONObject points = new JSONObject(
 									pol.getString("points"));
+							map.clear();
 							for (int j = 0; j < polyType.get(i); j++) {
 								JSONObject pointIs = new JSONObject(
 										points.getString("point"+j+"is"));
@@ -716,6 +717,7 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 				                     .position(new LatLng(Double.valueOf(pointIs.getString("lat")),Double.valueOf(pointIs.getString("long"))))
 				                     .snippet("Lat: "+Double.valueOf(pointIs.getString("lat"))+"\nLong:"+Double.valueOf(pointIs.getString("long")))
 				                     .icon(BitmapDescriptorFactory.fromResource(R.drawable.middlepointblue))
+				                     .title("Last Coordinate")
 				                     .anchor(0.5f, 0.5f));
 								}
 								else
