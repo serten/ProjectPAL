@@ -698,6 +698,7 @@ public class FollowMe extends FragmentActivity implements OnMapReadyCallback,Con
 							JSONObject points = new JSONObject(
 									pol.getString("points"));
 							map.clear();
+							builder = new LatLngBounds.Builder();
 							for (int j = 0; j < polyType.get(i); j++) {
 								JSONObject pointIs = new JSONObject(
 										points.getString("point"+j+"is"));
