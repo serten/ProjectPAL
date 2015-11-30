@@ -1,72 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#99CC00"
+    android:background="@drawable/menuback"
     android:orientation="vertical" >
 
     <ImageView
         android:id="@+id/imageView1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="15dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="17dp"
         android:src="@drawable/menupal" />
 
     <TextView
         android:id="@+id/tVW"
         android:layout_width="match_parent"
         android:layout_height="43dp"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/imageView1"
         android:gravity="center"
-        android:text=""
+        android:text="asd"
         android:textSize="20dp" />
-
-    <Button
-        android:id="@+id/button1"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/holo_orange_light"
-        android:text="An Awesome Description"
-        android:textSize="14dp" />
-
-    <Button
-        android:id="@+id/alertZone"
-        style="?android:attr/buttonStyleSmall"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/holo_blue_dark"
-        android:text="Alert Zone" />
-
-    <Button
-        android:id="@+id/followMe"
-        style="?android:attr/buttonStyleSmall"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/holo_orange_light"
-        android:text="Follow Me!" />
-
-    <Button
-        android:id="@+id/listOfFriends"
-        style="?android:attr/buttonStyleSmall"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/holo_blue_dark"
-        android:text="List of Friends" />
 
     <Button
         android:id="@+id/aboutDev"
         style="?android:attr/buttonStyleSmall"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/holo_orange_light"
-        android:text="About" />
+        android:layout_alignBottom="@+id/listOfFriends"
+        android:layout_alignLeft="@+id/followMe"
+        android:layout_alignRight="@+id/followMe"
+        android:layout_alignTop="@+id/listOfFriends"
+        android:background="@drawable/abouticon" />
 
     <Button
-        android:id="@+id/Button02"
+        android:id="@+id/followMe"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="128dp"
+        android:layout_height="128dp"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/tVW"
+        android:layout_marginRight="25dp"
+        android:background="@drawable/followmeicon" />
+
+    <Button
+        android:id="@+id/alertZone"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="128dp"
+        android:layout_height="128dp"
+        android:layout_alignBaseline="@+id/followMe"
+        android:layout_alignBottom="@+id/followMe"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="25dp"
+        android:background="@drawable/alertzoneicon" />
+
+    <Button
+        android:id="@+id/listOfFriends"
         style="?android:attr/buttonStyleSmall"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/holo_blue_dark"
-        android:text="Button" />
+        android:layout_height="128dp"
+        android:layout_alignLeft="@+id/alertZone"
+        android:layout_alignRight="@+id/alertZone"
+        android:layout_below="@+id/alertZone"
+        android:layout_marginTop="22dp"
+        android:background="@drawable/friendlisticon"
+        />
 
-</LinearLayout>
+</RelativeLayout>
